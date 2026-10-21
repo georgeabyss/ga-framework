@@ -3,6 +3,8 @@
 #   ga_add_plugin(MyPlugin PRODUCT_NAME "My Plugin" PLUGIN_CODE Abc1 BUNDLE_ID com.ga.myplugin SOURCES ${SOURCES})
 include_guard(GLOBAL)
 
+get_filename_component(GA_FRAMEWORK_DIR "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
@@ -51,6 +53,11 @@ function(ga_add_plugin target)
         VST3_CATEGORIES ${GA_VST3_CATEGORIES})
 
     target_sources(${target} PRIVATE ${GA_SOURCES})
+
+    # the framework's own code, included as e.g. #include "ui/Controls.h"
+    file(GLOB GA_FRAMEWORK_SOURCES CONFIGURE_DEPENDS ${GA_FRAMEWORK_DIR}/ui/*.cpp)
+    target_sources(${target} PRIVATE ${GA_FRAMEWORK_SOURCES})
+    target_include_directories(${target} PUBLIC ${GA_FRAMEWORK_DIR})
 
     target_compile_definitions(${target}
         PUBLIC

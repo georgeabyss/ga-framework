@@ -26,4 +26,16 @@ ga_add_tool(MyPlugin MyPluginTests OPTION MYPLUGIN_TESTS SOURCES tools/Tests.cpp
 Audio Unit, link-time optimisation and dead-code stripping. `ga_add_tool()` builds a command-line tool
 that runs the plug-in's own code, only when its option is on.
 
-Coming next: UI building blocks, presets, DSP blocks, the output stage and a processor base.
+## Interface (ui/)
+
+Compiled into every plug-in by `ga_add_plugin()`; include as `#include "ui/Controls.h"`.
+
+| File | |
+| --- | --- |
+| `ui/Style.h` | `ga::ui`: colours, fonts, drawing (recess, inset panel, knob faces, LED, padlock, screw), `drawTitle()`, `drawLogo()`; `ga::LookAndFeel` for menus, tooltips and dialogs |
+| `ui/Controls.h` | `ga::Knob` (regular and mini, lockable), `StepBox`, `LampButton`, `SquareToggle`, `SectionLed`, `LedToggle`, `MenuBox` |
+| `ui/Meters.h` | `ga::CorrelationMeter`, `ga::Goniometer` |
+
+The window size stays in each plug-in.
+
+Coming next: bottom strip and editor shell, presets, DSP blocks, the output stage and a processor base.
