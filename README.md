@@ -62,4 +62,10 @@ Each plug-in describes its presets in a `ga::PresetManager::Config`: the folder,
 file tag (never change these after a release), the parameters a preset stores, the lockable parameters,
 the factory presets (the first one is the default) and an optional tag shown in the list.
 
-Coming next: DSP blocks, the output stage and a processor base.
+## DSP (dsp/)
+
+| File | |
+| --- | --- |
+| `dsp/DspBlocks.h` | `ga::dsp`, header only, no JUCE: `DelayLine` (4-point Hermite), `Biquad` (low / high pass, K-weighting stages), `Crossover` (Linkwitz-Riley 4th order), `Allpass1`, `Allpass2`, `Hilbert` (90° pair) |
+
+Coming next: the output stage and a processor base.
