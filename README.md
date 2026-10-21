@@ -51,4 +51,15 @@ private:
 
 The window size stays in each plug-in.
 
-Coming next: presets, DSP blocks, the output stage and a processor base.
+## Presets (presets/)
+
+| File | |
+| --- | --- |
+| `presets/PresetManager.h` | `ga::PresetManager`: factory and user presets as one list, save / rename / delete, locks (a locked value stays when a preset loads), the modified flag. Values missing from a preset are the defaults |
+| `presets/PresetBar.h` | `ga::PresetBar`: the dot-matrix preset browser with previous / next, the list, Save / Rename / Delete and the safety-mute warning |
+
+Each plug-in describes its presets in a `ga::PresetManager::Config`: the folder, file extension and
+file tag (never change these after a release), the parameters a preset stores, the lockable parameters,
+the factory presets (the first one is the default) and an optional tag shown in the list.
+
+Coming next: DSP blocks, the output stage and a processor base.

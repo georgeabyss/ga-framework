@@ -12,9 +12,13 @@ namespace ga::pid
     inline constexpr const char* phaseProtect = "phaseguard";   // was called Phase Guard
 }
 
-// Editor settings that are not parameters, saved as properties of the state tree
+// Settings that are not parameters, saved as properties of the state tree
 namespace ga::prop
 {
-    inline constexpr const char* scopeOpen = "scopeOpen";
-    inline constexpr const char* uiScale   = "uiScale";
+    inline constexpr const char* scopeOpen    = "scopeOpen";
+    inline constexpr const char* uiScale      = "uiScale";
+    inline constexpr const char* preset       = "preset";         // name of the current preset
+    inline constexpr const char* presetIsUser = "presetUser";     // ... and whether it is a user preset
+    inline constexpr const char* lockDryWet   = "lockDryWet";     // locked values stay when a preset loads
+    inline constexpr const char* lockBassMono = "lockBassMono";
 }
