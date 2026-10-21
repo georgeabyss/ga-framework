@@ -35,7 +35,20 @@ Compiled into every plug-in by `ga_add_plugin()`; include as `#include "ui/Contr
 | `ui/Style.h` | `ga::ui`: colours, fonts, drawing (recess, inset panel, knob faces, LED, padlock, screw), `drawTitle()`, `drawLogo()`; `ga::LookAndFeel` for menus, tooltips and dialogs |
 | `ui/Controls.h` | `ga::Knob` (regular and mini, lockable), `StepBox`, `LampButton`, `SquareToggle`, `SectionLed`, `LedToggle`, `MenuBox` |
 | `ui/Meters.h` | `ga::CorrelationMeter`, `ga::Goniometer` |
+| `ui/BottomStrip.h` | `ga::BottomStrip`: Bypass, Dry/Wet, Bass Mono \| oversampling, filter, window size \| correlation, Phase Protect, goniometer button. Asks the plug-in through a small `Host` struct of callbacks |
+| `ui/EditorShell.h` | `ga::EditorShell`: the editor itself. Faceplate, rack screws, bottom strip, goniometer side panel, scaling (75–200 %, corner drag), scale and goniometer saved with the session. The plug-in derives from it and hands over its panel and size |
+| `plugin/SharedIds.h` | `ga::pid` and `ga::prop`: the parameter and property names the strip and shell use (`mix`, `bassmono`, `bypass`, `os`, `osfilter`, `phaseguard`, `scopeOpen`, `uiScale`); never change them |
+
+```cpp
+class MyEditor : public ga::EditorShell
+{
+public:
+    MyEditor (MyProcessor& p) : ga::EditorShell (p, p.apvts, stripHost (p)), panel (p) { setPanel (panel, 802, 192); }
+private:
+    MyPanel panel;   // transparent: title and the plug-in's own sections
+};
+```
 
 The window size stays in each plug-in.
 
-Coming next: bottom strip and editor shell, presets, DSP blocks, the output stage and a processor base.
+Coming next: presets, DSP blocks, the output stage and a processor base.
