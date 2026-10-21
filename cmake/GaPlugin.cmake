@@ -55,7 +55,7 @@ function(ga_add_plugin target)
     target_sources(${target} PRIVATE ${GA_SOURCES})
 
     # the framework's own code, included as e.g. #include "ui/Controls.h"
-    file(GLOB GA_FRAMEWORK_SOURCES CONFIGURE_DEPENDS ${GA_FRAMEWORK_DIR}/ui/*.cpp ${GA_FRAMEWORK_DIR}/presets/*.cpp)
+    file(GLOB GA_FRAMEWORK_SOURCES CONFIGURE_DEPENDS ${GA_FRAMEWORK_DIR}/ui/*.cpp ${GA_FRAMEWORK_DIR}/presets/*.cpp ${GA_FRAMEWORK_DIR}/dsp/*.cpp)
     target_sources(${target} PRIVATE ${GA_FRAMEWORK_SOURCES})
     target_include_directories(${target} PUBLIC ${GA_FRAMEWORK_DIR})
 

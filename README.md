@@ -67,5 +67,6 @@ the factory presets (the first one is the default) and an optional tag shown in 
 | File | |
 | --- | --- |
 | `dsp/DspBlocks.h` | `ga::dsp`, header only, no JUCE: `DelayLine` (4-point Hermite), `Biquad` (low / high pass, K-weighting stages), `Crossover` (Linkwitz-Riley 4th order), `Allpass1`, `Allpass2`, `Hilbert` (90° pair) |
+| `dsp/OutputStage.h` | `ga::dsp::OutputStage`, no JUCE: the end of every GA effect, per sample from the dry input and the effect's output: dry/wet, Bass Mono, Phase Protect (correlation kept above +0.2; `protectActivity` for the LED), loudness match (K-weighted, ITU-R BS.1770) |
 
-Coming next: the output stage and a processor base.
+Coming next: a processor base.
