@@ -10,7 +10,8 @@ namespace ga
 //   output:   Bypass, Dry/Wet, Bass Mono
 //   settings: oversampling, anti-alias filter, window size
 //   phase:    correlation meter, Phase Protect, goniometer button
-// Features the processor config switches off are left out; the others keep their places.
+// Features the processor config switches off are left out; the others keep their places, except
+// Phase Protect, which moves to the right end when there is no goniometer button.
 // Laid out at a fixed native size (kWidth x kBoxHeight) and scaled as one piece: the plug-in gives it
 // an area with setArea(), and it fills it as far as its proportions allow, centred.
 class BottomStrip : public juce::Component, private juce::Timer

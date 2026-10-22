@@ -15,6 +15,7 @@ namespace
     constexpr int kSdOs = kSetX + 8, kSdFilt = kSdOs + 41, kSdSize = kSdFilt + 87;
     constexpr int kSdMeterW = 220;                            // the correlation meter, from the box's left edge + 7
     constexpr int kSdProtect = kCorX + 230, kSdProtectW = 84;
+    constexpr int kSdEndCentre = kCorX + kCorW - 17;          // the goniometer button's centre; Phase Protect's LED without it
 
     juce::RangedAudioParameter& parameter (juce::AudioProcessorValueTreeState& s, const char* id)
     {
@@ -219,12 +220,14 @@ void BottomStrip::resized()
     bypass.setBounds   (x0 + kSdBypass, scy - 9, 18, 18);
     dryWet.setBounds   (x0 + kSdDryWet, y0 + 1, 78, kBoxHeight - 2);
     place (bassMono.get(), x0 + kSdBass, y0 + 1, 86, kBoxHeight - 2);
-    place (phaseProtect.get(), x0 + kSdProtect, scy - 9, kSdProtectW, 18);
+    if (phaseProtect != nullptr)   // without the goniometer button, Phase Protect moves to the right end
+        phaseProtect->setBounds (scopeButton != nullptr ? x0 + kSdProtect : x0 + kSdEndCentre - juce::roundToInt (phaseProtect->ledCentreX()),
+                                 scy - 9, kSdProtectW, 18);
     place (osFactor.get(), x0 + kSdOs,   scy - 8, 38, 17);
     place (osFilter.get(), x0 + kSdFilt, scy - 8, 84, 17);
     sizeBox.setBounds  (x0 + kSdSize, scy - 8, 42, 17);
 
     correlation.setBounds (x0 + kCorX + 7, y0, kSdMeterW, kBoxHeight);
-    place (scopeButton.get(), x0 + kCorX + kCorW - 26, scy - 9, 18, 18);
+    place (scopeButton.get(), x0 + kSdEndCentre - 9, scy - 9, 18, 18);
 }
 }

@@ -584,7 +584,13 @@ void LedToggle::paintButton (juce::Graphics& g, bool isOver, bool)
     g.setColour (isOver ? t.colours.labelHover : t.colours.label);
     g.setFont (font);
     g.drawText (text, juce::Rectangle<float> (2.0f, cy - 5.0f, textW + 2.0f, 10.0f), juce::Justification::centredLeft, false);
-    ui::drawLed (g, t, { 2.0f + textW + 8.0f, cy }, getToggleState(), alarm);
+    ui::drawLed (g, t, { ledCentreX(), cy }, getToggleState(), alarm);
+}
+
+float LedToggle::ledCentreX() const
+{
+    const auto& t = themeOf (*this);
+    return 2.0f + juce::GlyphArrangement::getStringWidth (t.font (t.type.label), getButtonText().toUpperCase()) + 8.0f;
 }
 
 //==============================================================================

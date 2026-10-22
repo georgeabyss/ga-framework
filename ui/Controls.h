@@ -134,6 +134,7 @@ public:
     }
     void setAlarm (float amount) { if (std::abs (amount - alarm) > 0.01f) { alarm = amount; repaint(); } }   // 0..1, orange
     void paintButton (juce::Graphics&, bool isOver, bool isDown) override;
+    float ledCentreX() const;   // where the LED sits, after the label
 
 private:
     float alarm = 0.0f;
