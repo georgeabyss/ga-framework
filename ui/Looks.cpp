@@ -255,4 +255,19 @@ void GaKnobFace::paintMini (juce::Graphics& g, const Theme& t, juce::Point<float
     g.setColour (hot ? t.colours.accentHi : t.colours.accent);
     g.strokePath (line, juce::PathStrokeType (1.6f * s, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
 }
+
+// a light arc at radius 17 (times knobRadius / its default), 1.6 px wide
+void GaKnobFace::paintModulation (juce::Graphics& g, const Theme& t, juce::Point<float> c, float from, float to) const
+{
+    const float s = t.sizes.knobRadius / Theme::Sizes{}.knobRadius;
+    const float startAngle = juce::degreesToRadians (225.0f), endAngle = juce::degreesToRadians (495.0f);
+    auto angle = [&] (float pos) { return startAngle + juce::jlimit (0.0f, 1.0f, pos) * (endAngle - startAngle); };
+    const float a0 = angle (juce::jmin (from, to)), a1 = angle (juce::jmax (from, to));
+    if (a1 - a0 < 0.01f)
+        return;
+    juce::Path arc;
+    arc.addCentredArc (c.x, c.y, 17.0f * s, 17.0f * s, 0.0f, a0, a1, true);
+    g.setColour (t.colours.modArc.withAlpha (0.9f));
+    g.strokePath (arc, juce::PathStrokeType (1.6f * s, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+}
 }

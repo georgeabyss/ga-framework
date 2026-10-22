@@ -66,6 +66,40 @@ juce::Point<int> Knob::dialCentre() const
     return style == Style::regular ? juce::Point<int> (28, 22) : juce::Point<int> (12, getHeight() / 2);
 }
 
+void Knob::setModulation (bool assigned, float depth)
+{
+    if (assigned != modAssigned || std::abs (depth - modDepth) > 1.0e-4f)
+    {
+        modAssigned = assigned;
+        modDepth = depth;
+        repaint();
+    }
+}
+
+void Knob::setModHighlight (ModHighlight h)
+{
+    if (h != highlight)
+    {
+        highlight = h;
+        repaint();
+    }
+}
+
+bool Knob::isInterestedInDragSource (const SourceDetails& d)
+{
+    return acceptsModulation() && d.description == juce::var (modDragDescription);
+}
+
+void Knob::itemDragEnter (const SourceDetails&)  { setModHighlight (ModHighlight::target); }
+void Knob::itemDragExit (const SourceDetails&)   { setModHighlight (ModHighlight::candidate); }
+
+void Knob::itemDropped (const SourceDetails&)
+{
+    setModHighlight (ModHighlight::none);
+    if (onModDrop != nullptr)
+        onModDrop();
+}
+
 juce::Point<int> anchorOf (const juce::Component& c)
 {
     if (auto* knob = dynamic_cast<const Knob*> (&c))
@@ -125,7 +159,32 @@ void Knob::paint (juce::Graphics& g)
         return;
     }
 
+    // while a modulation drag runs: an outline around the dial, dashed for a knob that takes it,
+    // solid for the one it would go to
+    if (highlight != ModHighlight::none)
+    {
+        const auto r = juce::Rectangle<float> (41.0f, 42.0f).withCentre ({ 28.0f, 22.0f }).reduced (0.5f);
+        if (highlight == ModHighlight::target)
+        {
+            g.setColour (t.colours.accent.withAlpha (0.08f));
+            g.fillRoundedRectangle (r, 4.0f);
+            g.setColour (t.colours.accentHi);
+            g.drawRoundedRectangle (r, 4.0f, 1.0f);
+        }
+        else
+        {
+            juce::Path outline, dashed;
+            outline.addRoundedRectangle (r, 4.0f);
+            const float dashes[] = { 2.5f, 2.0f };
+            juce::PathStrokeType (1.0f).createDashedStroke (dashed, outline, dashes, 2);
+            g.setColour (t.colours.accentHi.withAlpha (0.45f));
+            g.fillPath (dashed);
+        }
+    }
+
     t.looks.knob->paint (g, t, { 28.0f, 22.0f }, proportion(), hot);
+    if (modAssigned)
+        t.looks.knob->paintModulation (g, t, { 28.0f, 22.0f }, proportion(), proportion() + modDepth);
     if (valueEditor == nullptr)
     {
         g.setColour (valueColour);

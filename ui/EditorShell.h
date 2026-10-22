@@ -26,13 +26,17 @@ public:
 //       MyEditor (MyProcessor& p) : ga::EditorShell (p, p.apvts, host), panel (p) { setPanel (panel, 802, 192, 26, 8); }
 //       MyPanel panel;   // a ga::Panel: draws and places its own sections and the bottom strip
 //   };
-class EditorShell : public juce::AudioProcessorEditor
+class EditorShell : public juce::AudioProcessorEditor, public juce::DragAndDropContainer
 {
 public:
     EditorShell (ProcessorBase&, juce::AudioProcessorValueTreeState&, BottomStrip::Host, Theme = {});
     ~EditorShell() override;
 
     void resized() override;
+
+    // a modulation drag (ga::ModSource): the knobs that take it show it
+    void dragOperationStarted (const juce::DragAndDropTarget::SourceDetails&) override;
+    void dragOperationEnded (const juce::DragAndDropTarget::SourceDetails&) override;
 
 protected:
     // call once from the plug-in's editor constructor: the window size at 100 % and the margin

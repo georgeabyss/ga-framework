@@ -6,6 +6,7 @@
 //   <plugin>Gallery check <dir>    compare with them; any differing pixel fails
 
 #include "ui/Section.h"
+#include "ui/Modulation.h"
 
 namespace
 {
@@ -140,6 +141,46 @@ namespace
         return sheet;
     }
 
+    // Modulation: knobs with their arc, the outlines while dragging, the donuts and the grip
+    std::unique_ptr<Sheet> modulationSheet()
+    {
+        auto sheet = std::make_unique<Sheet> (430, 200);
+        auto& s = *sheet;
+
+        struct K { float value, depth; ga::Knob::ModHighlight h; const char* caption; };
+        int x = 20;
+        for (auto k : { K { 45.0f, 0.3f, ga::Knob::ModHighlight::none, "ARC +30 %" },
+                        K { 60.0f, -0.25f, ga::Knob::ModHighlight::none, "ARC -25 %" },
+                        K { 50.0f, 0.0f, ga::Knob::ModHighlight::candidate, "CAN TAKE IT" },
+                        K { 50.0f, 0.0f, ga::Knob::ModHighlight::target, "DROP HERE" } })
+        {
+            auto& knob = s.make<ga::Knob> (percent (s, "v", k.value), "Freq");
+            knob.setModulation (k.depth != 0.0f, k.depth);
+            knob.setModHighlight (k.h);
+            knob.setTopLeftPosition (x, 34);
+            s.addAndMakeVisible (knob);
+            s.caption ({ x, 16, 80, 10 }, k.caption);
+            x += 100;
+        }
+
+        auto& grip = s.make<ga::ModSource>();
+        grip.setTopLeftPosition (20, 150);
+        s.addAndMakeVisible (grip);
+        s.caption ({ 14, 130, 60, 10 }, "GRIP");
+
+        x = 120;
+        for (float depth : { 60.0f, -40.0f, 100.0f, 0.0f })
+        {
+            auto& p = s.make<AudioParameterFloat> (ParameterID { "depth", 1 }, "Depth", NormalisableRange<float> (-100.0f, 100.0f, 0.1f), depth);
+            auto& donut = s.make<ga::ModDonut> (p);
+            donut.setTopLeftPosition (x, 152);
+            s.addAndMakeVisible (donut);
+            x += 24;
+        }
+        s.caption ({ 114, 130, 200, 10 }, "DONUTS: +60, -40, +100, 0 %");
+        return sheet;
+    }
+
     struct SheetDef
     {
         const char* name;
@@ -152,6 +193,7 @@ namespace
             { "section", sectionSheet },
             { "stages", stagesSheet },
             { "solo", soloSheet },
+            { "modulation", modulationSheet },
         };
         return all;
     }

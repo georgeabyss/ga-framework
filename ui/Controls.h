@@ -5,9 +5,12 @@
 
 namespace ga
 {
+// what a ga::ModSource drags; knobs with onModDrop take it
+inline constexpr const char* modDragDescription = "ga.modulation";
+
 // Knob with the value printed below it and the name below that. The whole area reacts:
 // drag up/down (Shift or Cmd = fine), double-click or Alt-click = default, wheel, right-click = menu.
-class Knob : public juce::Component, public juce::SettableTooltipClient
+class Knob : public juce::Component, public juce::SettableTooltipClient, public juce::DragAndDropTarget
 {
 public:
     // regular: 56 x 70, value and name below. mini: small dial with name and value to its right.
@@ -32,6 +35,23 @@ public:
     void setLockable (std::function<void()> onLockClick);
     void setLocked (bool shouldBeLocked);
 
+    // Modulation (regular style). The arc runs from the value to value + depth (depth in travel,
+    // -1..1); without an assignment there is none.
+    void setModulation (bool assigned, float depth);
+    // set: the knob takes the Env Follower (a ga::ModSource dropped on it calls this)
+    std::function<void()> onModDrop;
+    // while a modulation drag runs: candidate = dashed outline, target = solid (under the cursor,
+    // or its donut hovered)
+    enum class ModHighlight { none, candidate, target };
+    void setModHighlight (ModHighlight);
+    bool acceptsModulation() const { return onModDrop != nullptr; }
+
+    // DragAndDropTarget: a ga::ModSource
+    bool isInterestedInDragSource (const SourceDetails&) override;
+    void itemDragEnter (const SourceDetails&) override;
+    void itemDragExit (const SourceDetails&) override;
+    void itemDropped (const SourceDetails&) override;
+
 private:
     float proportion() const { return param.convertTo0to1 (value); }
     juce::Rectangle<float> nameArea() const;
@@ -53,6 +73,9 @@ private:
     bool dragging = false, locked = false, overName = false;
     std::function<void()> onLockClick;
     std::unique_ptr<juce::TextEditor> valueEditor;
+    bool modAssigned = false;
+    float modDepth = 0.0f;
+    ModHighlight highlight = ModHighlight::none;
 };
 
 // integer / choice value with two small arrows. Number box: drag up/down, click the arrows, wheel.

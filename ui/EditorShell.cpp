@@ -1,5 +1,6 @@
 #include "EditorShell.h"
 #include "plugin/SharedIds.h"
+#include "Modulation.h"
 
 namespace ga
 {
@@ -119,6 +120,17 @@ void EditorShell::resized()
     faceplate.setBounds (0, 0, contentWidth(), baseHeight);
     state.state.setProperty (prop::uiScale, windowScale(), nullptr);
     faceplate.repaint();
+}
+
+void EditorShell::dragOperationStarted (const juce::DragAndDropTarget::SourceDetails& d)
+{
+    if (d.description == juce::var (modDragDescription))
+        forEachModTarget (*this, [] (Knob& k) { k.setModHighlight (Knob::ModHighlight::candidate); });
+}
+
+void EditorShell::dragOperationEnded (const juce::DragAndDropTarget::SourceDetails&)
+{
+    forEachModTarget (*this, [] (Knob& k) { k.setModHighlight (Knob::ModHighlight::none); });
 }
 
 void EditorShell::Faceplate::paint (juce::Graphics& g)

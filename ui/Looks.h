@@ -92,6 +92,8 @@ public:
     virtual ~KnobFace() = default;
     virtual void paint (juce::Graphics&, const Theme&, juce::Point<float> centre, float pos, bool hot) const = 0;
     virtual void paintMini (juce::Graphics&, const Theme&, juce::Point<float> centre, float pos, bool hot) const = 0;
+    // the modulation arc just outside the dial, from position `from` to `to` (0..1, either way round)
+    virtual void paintModulation (juce::Graphics&, const Theme&, juce::Point<float> centre, float from, float to) const = 0;
 };
 
 // grey ring around a darker core, accent pointer, three position dots; the mini one with a value arc
@@ -100,5 +102,6 @@ class GaKnobFace : public KnobFace
 public:
     void paint (juce::Graphics&, const Theme&, juce::Point<float>, float, bool) const override;
     void paintMini (juce::Graphics&, const Theme&, juce::Point<float>, float, bool) const override;
+    void paintModulation (juce::Graphics&, const Theme&, juce::Point<float>, float, float) const override;
 };
 }

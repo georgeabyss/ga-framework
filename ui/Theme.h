@@ -28,6 +28,7 @@ struct Theme
         juce::Colour accentDeep    { 0xff7c55d6 };   // title gradient, bottom; rim of a lit LED
         juce::Colour onAccent      { 0xff141518 };   // text on an accent background (menu highlight)
         juce::Colour locked        { 0xffb9a6e6 };   // the name of a locked value
+        juce::Colour modArc        { 0xffe6d8ff };   // a knob's modulation arc
 
         // lamps (square lens) and LEDs (round lens)
         juce::Colour lampLit       { 0xffe6d8ff };   // centre of a lit lamp
