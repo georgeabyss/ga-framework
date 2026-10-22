@@ -21,6 +21,14 @@ void Header::setPresetBar (int height, int offsetX)
     resized();
 }
 
+void Header::setPresetExtras (std::vector<juce::Component*> e)
+{
+    extras = std::move (e);
+    for (auto* c : extras)
+        addAndMakeVisible (c);
+    resized();
+}
+
 void Header::paint (juce::Graphics& g)
 {
     const auto& t = themeOf (*this);
@@ -35,8 +43,18 @@ void Header::resized()
     const float titleRight = (float) row.getX() + ui::titleWidth (themeOf (*this), title);
     const float logoLeft = (float) row.getRight() - ui::logoSize (themeOf (*this)).getWidth();
     const int width = PresetBar::widthForHeight (presetHeight);
+    int group = width;   // the preset bar and its extras, centred together
+    for (auto* c : extras)
+        group += kExtraGap + c->getWidth();
 
-    presetBar.setBounds (juce::roundToInt ((titleRight + logoLeft - (float) width) * 0.5f) + presetOffset,
-                         row.getCentreY() - presetHeight / 2, width, presetHeight);
+    int x = juce::roundToInt ((titleRight + logoLeft - (float) group) * 0.5f) + presetOffset;
+    presetBar.setBounds (x, row.getCentreY() - presetHeight / 2, width, presetHeight);
+    x += width;
+    for (auto* c : extras)
+    {
+        x += kExtraGap;
+        c->setTopLeftPosition (x, row.getCentreY() - c->getHeight() / 2);
+        x += c->getWidth();
+    }
 }
 }

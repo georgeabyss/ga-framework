@@ -31,6 +31,9 @@ public:
     // where the dial's centre is, in the knob (sections line knobs up by it)
     juce::Point<int> dialCentre() const;
 
+    // the name under it, e.g. NOISE instead of DRIVE
+    void setLabel (const juce::String& name) { if (name != nameText) { nameText = name; repaint(); } }
+
     // mini style only: clicking the name calls onLockClick (like Valhalla's mix lock)
     void setLockable (std::function<void()> onLockClick);
     void setLocked (bool shouldBeLocked);
@@ -92,6 +95,12 @@ public:
     // for one step (Shift: 2.4 times as far)
     void setWideNumber (std::function<int (int value, int direction)> arrowStep, float pxPerStep);
 
+    // the names shown (box and list) instead of the parameter's own texts, e.g. LINK / M / S
+    void setItemNames (std::function<juce::String (int value)> names) { itemNames = std::move (names); repaint(); }
+    // set: a choice (list, arrows, wheel) calls this instead of setting the parameter; the plug-in
+    // decides what it does (e.g. copies values first)
+    std::function<void (int value)> onChoose;
+
     void paint (juce::Graphics&) override;
     void mouseMove (const juce::MouseEvent&) override;
     void mouseExit (const juce::MouseEvent&) override;
@@ -111,6 +120,8 @@ private:
     juce::RangedAudioParameter& param;
     bool names = false, arrows = true, wide = false;
     std::function<int (int, int)> arrowStep;
+    std::function<juce::String (int)> itemNames;
+    void choose (int v);   // a value the user picked: onChoose, or the parameter
     float pxPerStep = 10.0f;
     juce::ParameterAttachment attach;
     int value = 0, minValue = 0, maxValue = 1, hoverArrow = 0;

@@ -394,8 +394,19 @@ int StepBox::arrowAt (juce::Point<float> p) const
     return p.y < r.getCentreY() ? 1 : -1;
 }
 
+void StepBox::choose (int v)
+{
+    v = juce::jlimit (minValue, maxValue, v);
+    if (onChoose != nullptr)
+        onChoose (v);
+    else
+        attach.setValueAsCompleteGesture ((float) v);
+}
+
 juce::String StepBox::valueText (int v) const
 {
+    if (itemNames != nullptr)
+        return itemNames (v);
     return param.getText (param.convertTo0to1 ((float) v), 24);
 }
 
@@ -404,7 +415,7 @@ void StepBox::step (int delta)
     int next = value + delta;
     if (names)   // choices wrap around
         next = next > maxValue ? minValue : (next < minValue ? maxValue : next);
-    attach.setValueAsCompleteGesture ((float) juce::jlimit (minValue, maxValue, next));
+    choose (next);
 }
 
 void StepBox::paint (juce::Graphics& g)
@@ -469,7 +480,7 @@ void StepBox::mouseDown (const juce::MouseEvent& e)
     if (const int a = arrowAt (e.position))
     {
         if (arrowStep != nullptr)
-            attach.setValueAsCompleteGesture ((float) juce::jlimit (minValue, maxValue, arrowStep (value, a)));
+            choose (arrowStep (value, a));
         else
             step (a);
         return;
@@ -538,7 +549,7 @@ void StepBox::showMenu (bool valuesOnly)
     auto onItem = [safe] (int id)
     {
         if (safe != nullptr)
-            safe->attach.setValueAsCompleteGesture ((float) (safe->minValue + id - 100));
+            safe->choose (safe->minValue + id - 100);
     };
 
     items.setLookAndFeel (&getLookAndFeel());

@@ -20,6 +20,9 @@ public:
     // right (negative: left) from the centre between title and logo, when that looks more balanced
     void setPresetBar (int height, int offsetX);
 
+    // controls right of the preset bar (e.g. a dice), centred together with it; they keep their size
+    void setPresetExtras (std::vector<juce::Component*>);
+
     void paint (juce::Graphics&) override;
     void resized() override;
     void parentHierarchyChanged() override { resized(); }   // the theme may have changed
@@ -30,6 +33,8 @@ private:
     static constexpr int kBleed = 16;           // room for the echo and the shadows around the row
 
     juce::String title, subtitle;
+    std::vector<juce::Component*> extras;
+    static constexpr int kExtraGap = 6;
     int presetHeight = PresetBar::kHeight, presetOffset = 0;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (Header)
