@@ -13,7 +13,7 @@ namespace
 //==============================================================================
 BandCard::BandCard()
 {
-    setSize (180, 80);
+    setSize (180 + 2 * glowPadding, 80 + 2 * glowPadding);
     setMouseCursor (juce::MouseCursor::PointingHandCursor);
 }
 
@@ -29,7 +29,7 @@ void BandCard::setControls (juce::Component* l, juce::Component* s, juce::Compon
 }
 
 void BandCard::setName (const juce::String& n)                 { name = n; repaint(); }
-void BandCard::setSelected (bool s)                            { if (s != selected) { selected = s; repaint(); if (auto* p = getParentComponent()) p->repaint(); } }
+void BandCard::setSelected (bool s)                            { if (s != selected) { selected = s; repaint(); } }
 void BandCard::setActive (bool a)                              { if (a != active) { active = a; repaint(); } }
 
 void BandCard::setInfo (const juce::String& i, const juce::String& r, const juce::String& s)
@@ -44,14 +44,15 @@ void BandCard::setTraces (Trace m, Trace s)
 {
     main = std::move (m);
     second = std::move (s);
-    repaint (traceArea());
+    repaint (traceArea() + face().getPosition());
 }
 
-juce::Rectangle<int> BandCard::traceArea() const
+juce::Rectangle<int> BandCard::traceArea() const   // in the face
 {
+    const auto f = face();
     const int top = kPad + kTopRow + kRangeRow + 3;
-    const int bottom = getHeight() - kPad - (dropdown != nullptr ? dropdown->getHeight() : 0) - 3;
-    return { kPad + 2, top, getWidth() - 2 * kPad - 4, juce::jmax (0, bottom - top) };
+    const int bottom = f.getHeight() - kPad - (dropdown != nullptr ? dropdown->getHeight() : 0) - 3;
+    return { kPad + 2, top, f.getWidth() - 2 * kPad - 4, juce::jmax (0, bottom - top) };
 }
 
 void BandCard::paint (juce::Graphics& g)
@@ -59,7 +60,16 @@ void BandCard::paint (juce::Graphics& g)
     const auto& t = themeOf (*this);
     const auto& c = t.colours;
     const float dim = active ? 1.0f : t.sizes.dimAlpha;
-    const auto b = getLocalBounds().toFloat().reduced (0.5f);
+
+    // selected: a glow in the padding around the face
+    if (selected)
+        juce::DropShadow (c.accent.withAlpha (0.25f), glowPadding, {}).drawForRectangle (g, face());
+
+    // from here on, in the face
+    const auto f = face();
+    g.setOrigin (f.getPosition());
+    const int width = f.getWidth(), height = f.getHeight();
+    const auto b = juce::Rectangle<float> ((float) width, (float) height).reduced (0.5f);
 
     g.setColour (selected ? c.cardSelected : c.card);
     g.fillRoundedRectangle (b, kCorner);
@@ -68,7 +78,7 @@ void BandCard::paint (juce::Graphics& g)
 
     // top line: name after the LED, info before the solo button
     const int nameX = kPad + (led != nullptr ? led->getWidth() + 3 : 2);
-    const int infoRight = (solo != nullptr ? solo->getX() : getWidth() - kPad) - 4;
+    const int infoRight = (solo != nullptr ? solo->getX() - f.getX() : width - kPad) - 4;
     g.setFont (t.font (t.type.sectionTitle));
     g.setColour ((selected ? c.accentHi : c.sectionTitle).withMultipliedAlpha (dim));
     g.drawText (name, nameX, kPad, infoRight - nameX, kTopRow, juce::Justification::centredLeft, true);
@@ -79,7 +89,7 @@ void BandCard::paint (juce::Graphics& g)
     // range line
     g.setFont (t.font (t.type.value));
     g.setColour (c.mark.withMultipliedAlpha (dim));
-    g.drawText (range, kPad + 2, kPad + kTopRow, getWidth() - 2 * kPad - 4, kRangeRow, juce::Justification::centredLeft, true);
+    g.drawText (range, kPad + 2, kPad + kTopRow, width - 2 * kPad - 4, kRangeRow, juce::Justification::centredLeft, true);
 
     // status, bottom right
     if (status.isNotEmpty())
@@ -87,7 +97,7 @@ void BandCard::paint (juce::Graphics& g)
         const int rowH = dropdown != nullptr ? dropdown->getHeight() : 12;
         g.setFont (t.font (t.type.panelTitle));
         g.setColour (c.mark.withMultipliedAlpha (dim));
-        g.drawText (status, kPad, getHeight() - kPad - rowH, getWidth() - 2 * kPad - 2, rowH, juce::Justification::centredRight, true);
+        g.drawText (status, kPad, height - kPad - rowH, width - 2 * kPad - 2, rowH, juce::Justification::centredRight, true);
     }
 
     // traces: min / max per column around the centre line, the second one dimmer
@@ -118,13 +128,14 @@ void BandCard::paint (juce::Graphics& g)
 
 void BandCard::resized()
 {
-    const int cy = kPad + kTopRow / 2;
+    const auto f = face();
+    const int cy = f.getY() + kPad + kTopRow / 2;
     if (led != nullptr)
-        led->setTopLeftPosition (kPad, cy - led->getHeight() / 2);
+        led->setTopLeftPosition (f.getX() + kPad, cy - led->getHeight() / 2);
     if (solo != nullptr)
-        solo->setTopLeftPosition (getWidth() - kPad - solo->getWidth(), cy - solo->getHeight() / 2);
+        solo->setTopLeftPosition (f.getRight() - kPad - solo->getWidth(), cy - solo->getHeight() / 2);
     if (dropdown != nullptr)
-        dropdown->setTopLeftPosition (kPad, getHeight() - kPad - dropdown->getHeight());
+        dropdown->setTopLeftPosition (f.getX() + kPad, f.getBottom() - kPad - dropdown->getHeight());
 }
 
 void BandCard::mouseDown (const juce::MouseEvent&)
@@ -227,31 +238,30 @@ void BandStrip::setBands (std::vector<BandCard*> c, std::vector<SplitHandle*> s)
     repaint();
 }
 
-void BandStrip::paint (juce::Graphics& g)
+void BandStrip::setArea (juce::Rectangle<int> row)
 {
-    const auto& t = themeOf (*this);
-    for (auto* card : cards)
-        if (card->isSelected())
-            juce::DropShadow (t.colours.accent.withAlpha (0.25f), 8, {}).drawForRectangle (g, card->getBounds());
+    setBounds (row.expanded (BandCard::glowPadding));
 }
 
 void BandStrip::resized()
 {
     if (cards.empty())
         return;
+    // the row (the faces) inside the glow padding; each card's bounds add the padding back
+    const auto row = getLocalBounds().reduced (BandCard::glowPadding);
     const int n = (int) cards.size();
     const int splitW = splits.empty() ? 0 : splits.front()->getWidth();
-    const int cardW = (getWidth() - splitW * (n - 1)) / n;
-    int x = 0;
+    const int cardW = (row.getWidth() - splitW * (n - 1)) / n;
+    int x = row.getX();
     for (int i = 0; i < n; ++i)
     {
-        const int w = i == n - 1 ? getWidth() - x : cardW;   // the last card takes the remainder
-        cards[(size_t) i]->setBounds (x, 0, w, getHeight());
+        const int w = i == n - 1 ? row.getRight() - x : cardW;   // the last card takes the remainder
+        cards[(size_t) i]->setBounds (juce::Rectangle<int> (x, row.getY(), w, row.getHeight()).expanded (BandCard::glowPadding));
         x += w;
         if (i < n - 1)
         {
             auto* split = splits[(size_t) i];
-            split->setTopLeftPosition (x + (splitW - split->getWidth()) / 2, (getHeight() - split->getHeight()) / 2);
+            split->setTopLeftPosition (x + (splitW - split->getWidth()) / 2, row.getY() + (row.getHeight() - split->getHeight()) / 2);
             x += splitW;
         }
     }

@@ -7,10 +7,17 @@ namespace ga
 // A band as a card: the plug-in's on/off LED, its name, a stage count (or any short info) and its
 // solo button on the top line; a range line; one or two traces (e.g. the band's impulse response);
 // the plug-in's drop-down and a status word on the bottom line. Click the card to select it.
+// Its bounds have room for the selected glow around the face (glowPadding on every side); only the
+// face takes clicks.
 class BandCard : public juce::Component
 {
 public:
+    static constexpr int glowPadding = 8;
+
     BandCard();
+
+    juce::Rectangle<int> face() const { return getLocalBounds().reduced (glowPadding); }
+    bool hitTest (int x, int y) override { return face().contains (x, y); }
 
     // the plug-in's controls, placed by the card: LED left of the name, solo top right,
     // drop-down bottom left (each keeps its own size); any may be null
@@ -69,7 +76,8 @@ private:
     bool dragging = false;
 };
 
-// Band cards side by side, sharing the width, with fixed-width split handles between them.
+// Band cards side by side, sharing the width, with fixed-width split handles between them. The
+// cards' glow padding overlaps the gaps and, at the ends, reaches beyond the row.
 class BandStrip : public juce::Component
 {
 public:
@@ -78,7 +86,10 @@ public:
     // splits.size() must be cards.size() - 1; the strip shows them, the caller owns them
     void setBands (std::vector<BandCard*> cards, std::vector<SplitHandle*> splits);
 
-    void paint (juce::Graphics&) override;   // the selected card's glow
+    // Place the strip: the cards' faces fill the row. Use this, not setBounds(): the glow of the
+    // outer cards reaches beyond it.
+    void setArea (juce::Rectangle<int> row);
+
     void resized() override;
 
 private:

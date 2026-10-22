@@ -233,7 +233,7 @@ namespace
             splits.push_back (&s.make<ga::SplitHandle> (p));
         }
         strip.setBands (cards, splits);
-        strip.setBounds (14, 32, 750, 80);
+        strip.setArea ({ 14, 32, 750, 80 });
         s.addAndMakeVisible (strip);
         s.caption ({ 14, 14, 700, 10 }, "BAND STRIP: CARDS (MID SELECTED, WITH A SECOND TRACE; HIGH OFF) AND SPLIT HANDLES");
         return sheet;
