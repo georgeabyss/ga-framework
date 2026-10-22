@@ -26,6 +26,7 @@ public:
         float bassMonoHz = 20.0f;   // everything below is made mono; <= 20 = off
         bool  phaseProtect = true;  // keep the correlation the effect adds above kGuardFloor
         bool  loudnessMatch = true; // keep the output as loud as the input (ProcessorConfig::loudnessMatch)
+        double loudnessWindow = 0.30;   // seconds the loudness match averages over
     };
 
     std::atomic<float> protectActivity { 0.0f };   // how far Phase Protect is pulling back right now, 0..1
@@ -73,6 +74,7 @@ private:
 
     Biquad kwIn[2][2], kwOut[2][2];   // K-weighting for the loudness match, [channel][stage]
     double powCoef = 0.0001, gainCoef = 0.001, attackCoef = 0.01, powIn = 0.0, powOut = 0.0, normGain = 1.0;
+    double powWindow = -1.0;   // the window powCoef was made for
 };
 
 } // namespace ga::dsp

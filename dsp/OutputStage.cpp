@@ -13,7 +13,8 @@ void OutputStage::prepare (double sampleRate, int channels)
     guardPowCoef = coef (0.05);   // Phase Protect: ~50 ms, quicker than the meter
     guardDown = coef (0.01);      // narrows quickly
     guardUp = coef (0.40);        // and widens again slowly
-    powCoef = coef (0.30);        // loudness window ~300 ms
+    powCoef = coef (prm.loudnessWindow);   // loudness window, ~300 ms by default
+    powWindow = prm.loudnessWindow;
     gainCoef = coef (0.12);       // gain rises slowly (~120 ms)
     attackCoef = coef (0.008);    // and falls fast (~8 ms) so jumps never overshoot
     for (int c = 0; c < 2; ++c)
@@ -35,6 +36,11 @@ void OutputStage::reset()
 
 void OutputStage::beginBlock()
 {
+    if (prm.loudnessWindow != powWindow)   // the same coefficient prepare() makes
+    {
+        powCoef = 1.0 - std::exp (-1.0 / (prm.loudnessWindow * sr));
+        powWindow = prm.loudnessWindow;
+    }
     bassMonoOn = prm.bassMonoHz > 20.5f;
     if (bassMonoOn && std::fabs ((double) prm.bassMonoHz - bmFreq) > 0.01)
     {

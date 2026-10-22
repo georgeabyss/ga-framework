@@ -97,14 +97,14 @@ the factory presets (the first one is the default) and an optional tag shown in 
 | File | |
 | --- | --- |
 | `dsp/DspBlocks.h` | `ga::dsp`, header only, no JUCE: `DelayLine` (4-point Hermite), `Biquad` (low / high pass, K-weighting stages), `Crossover` (Linkwitz-Riley 4th order), `Allpass1`, `Allpass2`, `Hilbert` (90° pair) |
-| `dsp/OutputStage.h` | `ga::dsp::OutputStage`, no JUCE: the end of every GA effect, per sample from the dry input and the effect's output: dry/wet, Bass Mono, Phase Protect (correlation kept above +0.2; `protectActivity` for the LED), loudness match (K-weighted, ITU-R BS.1770) |
+| `dsp/OutputStage.h` | `ga::dsp::OutputStage`, no JUCE: the end of every GA effect, per sample from the dry input and the effect's output: dry/wet, Bass Mono, Phase Protect (correlation kept above +0.2; `protectActivity` for the LED), loudness match (K-weighted, ITU-R BS.1770; `loudnessWindow`, 300 ms by default) |
 
 ## Processor (plugin/)
 
 | File | |
 | --- | --- |
 | `plugin/ProcessorBase.h` | `ga::ProcessorBase`, the `AudioProcessor` every GA effect derives from: stereo or mono, oversampling (Off / 2x / 4x / 8x, linear phase or low latency, latency reported), click-free bypass at the effect's loudness, safety mute, the scope buffer for the meters, state save / load. The plug-in implements `prepareWet`, `updateWetParams`, `processWet`, `resetWet`, and optionally `splitAtNoteOns` / `noteOn` (sample-accurate note-ons) and `migrateState` (old sessions) |
-| `plugin/ProcessorConfig.h` | `ga::ProcessorConfig`: the features a plug-in uses (oversampling, Bass Mono, Phase Protect, loudness match, scope, Dry/Wet locks, MIDI input) and the limits (safety level, oversampling factors, window sizes, corner-drag scale). `defaultScale` is the size of 100 % (screen pixels per layout pixel); the size menu and the saved window size are relative to it. A feature that is off has no parameter and is not in the bottom strip. The defaults are Hyper! Hyper! Dimension; pass the same config to `ProcessorBase` and `addSharedParameters()` |
+| `plugin/ProcessorConfig.h` | `ga::ProcessorConfig`: the features a plug-in uses (oversampling, Bass Mono, Phase Protect, loudness match, scope, Dry/Wet locks, MIDI input) and the limits (safety level, oversampling factors, window sizes, corner-drag scale). `oversampleWet` off lets the effect oversample only what needs it (it gets the factor and reports `wetLatency()`). `defaultScale` is the size of 100 % (screen pixels per layout pixel); the size menu and the saved window size are relative to it. A feature that is off has no parameter and is not in the bottom strip. The defaults are Hyper! Hyper! Dimension; pass the same config to `ProcessorBase` and `addSharedParameters()` |
 | `plugin/SharedParams.h` | `ga::addSharedParameters()`: Bass Mono, Dry/Wet, Bypass, Oversampling, Anti-Alias Filter, Phase Protect, appended after the plug-in's own parameters |
 | `plugin/SharedIds.h` | `ga::pid` and `ga::prop`: the shared parameter IDs (`mix`, `bassmono`, `bypass`, `os`, `osfilter`, `phaseguard`) and state properties (`scopeOpen`, `uiScale`, `preset`, `presetUser`, `lockDryWet`, `lockBassMono`); never change them |
 

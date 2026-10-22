@@ -11,6 +11,8 @@ struct ProcessorConfig
 {
     // features
     bool oversampling = true;    // the oversampling and anti-alias filter parameters and menus
+    bool oversampleWet = true;   // the shell oversamples the whole effect; false: the effect runs at the
+                                 // base rate, oversamples what it needs itself and reports wetLatency()
     bool bassMono = true;
     bool phaseProtect = true;
     bool loudnessMatch = true;   // the output stage keeps the output as loud as the input

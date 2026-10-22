@@ -49,7 +49,7 @@ void ProcessorBase::prepareToPlay (double sampleRate, int samplesPerBlock)
 
     using OS = juce::dsp::Oversampling<float>;
     for (int f = 0; f < 2; ++f)
-        for (int s = 0; s < maxOsStages; ++s)
+        for (int s = 0; s < (config.oversampleWet ? maxOsStages : 0); ++s)
         {
             auto& o = oversamplers[f][s];
             if (o == nullptr)
@@ -59,7 +59,8 @@ void ProcessorBase::prepareToPlay (double sampleRate, int samplesPerBlock)
             o->initProcessing ((size_t) maxBlock);
         }
 
-    prepareWet (sampleRate * (1 << maxOsStages), numCh, 1 << maxOsStages);   // allocate for the highest rate
+    // allocate for the highest rate (or, oversampling itself, the highest factor)
+    prepareWet (config.oversampleWet ? sampleRate * (1 << maxOsStages) : sampleRate, numCh, 1 << maxOsStages);
     osStages = osFilter = -1;
     updateOversampling();
     fadeIn = false;
@@ -84,13 +85,14 @@ void ProcessorBase::updateOversampling()
 
     osStages = stages;
     osFilter = filter;
-    activeOs = stages > 0 ? oversamplers[filter][stages - 1].get() : nullptr;
+    activeOs = config.oversampleWet && stages > 0 ? oversamplers[filter][stages - 1].get() : nullptr;
     if (activeOs != nullptr)
         activeOs->reset();
 
     // no allocation here: everything was sized for the highest rate in prepareToPlay
-    prepareWet (baseRate * (1 << stages), numCh, 1 << stages);
-    latency = activeOs != nullptr ? juce::roundToInt (activeOs->getLatencyInSamples()) : 0;
+    prepareWet (config.oversampleWet ? baseRate * (1 << stages) : baseRate, numCh, 1 << stages);
+    latency = activeOs != nullptr ? juce::roundToInt (activeOs->getLatencyInSamples())
+                                  : config.oversampleWet ? 0 : wetLatency();
     setLatencySamples (latency);
     dryDelay.clear();
     dryDelayPos = 0;

@@ -70,6 +70,11 @@ protected:
     virtual void processWet (float* const* io, int numSamples) = 0;
     virtual void resetWet() = 0;             // clear all delay lines and filters
 
+    // ProcessorConfig::oversampleWet off: prepareWet gets the base rate and the chosen factor (1, 2,
+    // 4, 8; the anti-alias filter is the osfilter parameter), and the effect reports the latency its
+    // own oversampling adds; the shell delays the dry signal by it and tells the host.
+    virtual int wetLatency() const { return 0; }
+
     // optional, with MIDI input: split the block at every note-on, so noteOn() lands on the exact sample (Retrig)
     virtual bool splitAtNoteOns() const { return false; }
     virtual void noteOn() {}
