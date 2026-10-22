@@ -44,7 +44,7 @@ namespace ga::ui
 
     // the silver gothic GA, its right edge at x = right and its top at y = top
     void drawLogo (juce::Graphics&, const Theme&, float right, float top);
-    juce::Rectangle<float> logoSize();   // its width and height
+    juce::Rectangle<float> logoSize (const Theme&);   // its width and height
 }
 
 namespace ga

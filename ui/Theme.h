@@ -132,7 +132,8 @@ struct Theme
         float insetCorner = 5.0f;       // its inner edge and bottom highlight follow
         float screwInsetX = 12.0f;      // screw centres, from the window's corners
         float screwInsetY = 22.0f;
-        float titleBaseline = 17.0f;    // from the top of the header row
+        float titleBaseline = 17.0f;    // from the top of the header row; the subtitle follows the title's size
+        float logoScale = 1.0f;         // the gothic GA
         float dimAlpha = 0.45f;         // controls of a section (or effect) that is off
     } sizes;
 

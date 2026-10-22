@@ -227,9 +227,12 @@ namespace ga::ui
             const juce::Rectangle<float> line (x, baseline - size * 0.75f, p.getBounds().getRight() - x, size * 0.75f + size / 24.0f);
             t.looks.title->paint (g, p, line, t);
         }
+        // the subtitle below, its place growing with the title (today's offsets times title size / default)
+        const float s = t.type.title.size / Theme::Type{}.title.size;
         g.setColour (t.colours.subtitle);
         g.setFont (t.font (t.type.subtitle));
-        g.drawText (subtitle, juce::roundToInt (x) + 2, juce::roundToInt (baseline) + 4, 200, 10, juce::Justification::centredLeft, false);
+        g.drawText (subtitle, juce::roundToInt (x + 2.0f * s), juce::roundToInt (baseline + 4.0f * s), juce::roundToInt (200.0f * s), juce::roundToInt (10.0f * s),
+                    juce::Justification::centredLeft, false);
     }
 
     float titleWidth (const Theme& t, const juce::String& title)
@@ -239,19 +242,30 @@ namespace ga::ui
         return ga.getBoundingBox (0, -1, true).getRight();
     }
 
-    juce::Rectangle<float> logoSize()
+    // the logo times logoScale / its default (exactly 1 by default)
+    float logoScale (const Theme& t)
     {
-        return logoPath().getBounds().withZeroOrigin();
+        return t.sizes.logoScale / Theme::Sizes{}.logoScale;
+    }
+
+    juce::Rectangle<float> logoSize (const Theme& t)
+    {
+        const float s = logoScale (t);
+        const auto b = logoPath().getBounds().withZeroOrigin();
+        return s == 1.0f ? b : b * s;
     }
 
     void drawLogo (juce::Graphics& g, const Theme& t, float right, float top)
     {
+        const float s = logoScale (t);
         auto ga = logoPath();
+        if (s != 1.0f)
+            ga.applyTransform (juce::AffineTransform::scale (s));
         const auto b = ga.getBounds();
         const float ox = right - b.getRight(), oy = top - b.getY();
         ga.applyTransform (juce::AffineTransform::translation (ox, oy));
-        juce::DropShadow (juce::Colours::black.withAlpha (0.75f), 3, { 0, 1 }).drawForPath (g, ga);
-        juce::ColourGradient sg (t.colours.logoTop, 0.0f, oy + 2.0f, t.colours.logoBottom, 0.0f, oy + 42.0f, false);
+        juce::DropShadow (juce::Colours::black.withAlpha (0.75f), juce::roundToInt (3.0f * s), { 0, juce::roundToInt (1.0f * s) }).drawForPath (g, ga);
+        juce::ColourGradient sg (t.colours.logoTop, 0.0f, oy + 2.0f * s, t.colours.logoBottom, 0.0f, oy + 42.0f * s, false);
         sg.addColour (0.45, t.colours.logoUpper);
         sg.addColour (0.55, t.colours.logoLower);
         g.setGradientFill (sg);

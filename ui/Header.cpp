@@ -33,7 +33,7 @@ void Header::resized()
 {
     const auto row = getLocalBounds().reduced (kBleed);
     const float titleRight = (float) row.getX() + ui::titleWidth (themeOf (*this), title);
-    const float logoLeft = (float) row.getRight() - ui::logoSize().getWidth();
+    const float logoLeft = (float) row.getRight() - ui::logoSize (themeOf (*this)).getWidth();
     const int width = PresetBar::widthForHeight (presetHeight);
 
     presetBar.setBounds (juce::roundToInt ((titleRight + logoLeft - (float) width) * 0.5f) + presetOffset,
