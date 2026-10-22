@@ -1,6 +1,7 @@
 #pragma once
 
 #include "BottomStrip.h"
+#include "plugin/ProcessorBase.h"
 
 namespace ga
 {
@@ -15,9 +16,10 @@ public:
 };
 
 // The editor every GA plug-in shares: one long faceplate with the plug-in's panel on it, the bottom
-// strip (placed by the panel) and the goniometer opening to the right. Laid out at 100 % and scaled
-// as a whole: drag the corner (fixed aspect ratio) or pick a size in the bottom strip. The scale and
-// whether the goniometer is open are saved with the session.
+// strip (placed by the panel) and the goniometer opening to the right (if the processor config has
+// the scope). Laid out at 100 % and scaled as a whole: drag the corner (fixed aspect ratio) or pick a
+// size in the bottom strip; the config sets the sizes and limits. The scale and whether the
+// goniometer is open are saved with the session.
 //
 //   class MyEditor : public ga::EditorShell
 //   {
@@ -27,7 +29,7 @@ public:
 class EditorShell : public juce::AudioProcessorEditor
 {
 public:
-    EditorShell (juce::AudioProcessor&, juce::AudioProcessorValueTreeState&, BottomStrip::Host, Theme = {});
+    EditorShell (ProcessorBase&, juce::AudioProcessorValueTreeState&, BottomStrip::Host, Theme = {});
     ~EditorShell() override;
 
     void resized() override;
@@ -47,6 +49,7 @@ private:
     };
 
     int contentWidth() const;   // at 100 %, wider while the goniometer is open
+    std::vector<float> menuSizes() const;   // the config's window sizes that fit on the screen
     juce::Rectangle<int> scopeBox() const;
     void setScopeOpen (bool open);
     void updateConstraints();
@@ -54,6 +57,7 @@ private:
     float currentScale() const { return (float) getHeight() / (float) baseHeight; }
 
     juce::AudioProcessorValueTreeState& state;
+    const ProcessorConfig& config;
     ga::LookAndFeel laf;
     Faceplate faceplate { *this };
     BottomStrip strip;

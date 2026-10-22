@@ -2,6 +2,7 @@
 
 #include "Controls.h"
 #include "Meters.h"
+#include "plugin/ProcessorConfig.h"
 
 namespace ga
 {
@@ -9,6 +10,7 @@ namespace ga
 //   output:   Bypass, Dry/Wet, Bass Mono
 //   settings: oversampling, anti-alias filter, window size
 //   phase:    correlation meter, Phase Protect, goniometer button
+// Features the processor config switches off are left out; the others keep their places.
 // Laid out at a fixed native size (kWidth x kBoxHeight) and scaled as one piece: the plug-in gives it
 // an area with setArea(), and it fills it as far as its proportions allow, centred.
 class BottomStrip : public juce::Component, private juce::Timer
@@ -19,7 +21,7 @@ public:
     {
         std::function<bool()> isBypassed;                     // Bypass on or Dry/Wet at 0: dims the output controls
         std::function<bool (const char* id)> isLocked;        // Dry/Wet and Bass Mono, locked against preset changes
-        std::function<void (const char* id)> toggleLock;
+        std::function<void (const char* id)> toggleLock;      // (only with ProcessorConfig::dryWetLocks)
         std::function<int (float* l, float* r, int max)> readScope;   // newest output samples, returns how many
         std::function<float()> protectActivity;               // how far Phase Protect pulls the side back, 0..1
         std::function<int()> latencySamples;
@@ -33,13 +35,13 @@ public:
     void setArea (juce::Rectangle<int> area);
     static int heightForWidth (int width);   // the area height that fits a given width exactly
 
-    BottomStrip (juce::AudioProcessorValueTreeState&, Host);
+    BottomStrip (juce::AudioProcessorValueTreeState&, Host, const ProcessorConfig&);
     ~BottomStrip() override;
 
     void paint (juce::Graphics&) override;
     void resized() override;
 
-    void setScopeOpen (bool open) { scopeButton.setToggleState (open, juce::dontSendNotification); }
+    void setScopeOpen (bool open) { if (scopeButton != nullptr) scopeButton->setToggleState (open, juce::dontSendNotification); }
     std::function<void (bool)> onScopeToggle;                              // the goniometer button
     std::function<void (const float*, const float*, int)> onScopeData;    // while the goniometer is open
 
@@ -54,14 +56,17 @@ private:
     static constexpr int kMargin = 4;   // empty space around the boxes, so their edges are never clipped
 
     Host host;
+    const bool locks;
     std::atomic<float>* dryWetValue;
 
+    // null where the config switches the feature off
     SquareToggle bypass { SquareToggle::Icon::power, true };   // lit while the effect is active
-    Knob dryWet, bassMono;
-    LedToggle phaseProtect { "Phase Protect" };
-    StepBox osFactor, osFilter;
+    Knob dryWet;
+    std::unique_ptr<Knob> bassMono;
+    std::unique_ptr<LedToggle> phaseProtect;
+    std::unique_ptr<StepBox> osFactor, osFilter;
     CorrelationMeter correlation;
-    SquareToggle scopeButton { SquareToggle::Icon::scope, false };
+    std::unique_ptr<SquareToggle> scopeButton;
 
     std::unique_ptr<juce::AudioProcessorValueTreeState::ButtonAttachment> bypassAtt, protectAtt;
 

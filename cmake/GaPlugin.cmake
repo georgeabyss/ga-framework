@@ -34,15 +34,23 @@ add_subdirectory(${GA_JUCE_PATH} JUCE)
 #     PRODUCT_NAME <name>          shown in hosts
 #     PLUGIN_CODE <4 chars>        unique per plug-in; never change it after a release
 #     BUNDLE_ID <id>
+#     [COMPANY <name>]             default GA
+#     [MANUFACTURER_CODE <4 chars>] default Gaau; never change it after a release
 #     [NEEDS_MIDI_INPUT TRUE]      default FALSE
 #     [AU_MAIN_TYPE <type>]        default kAudioUnitType_Effect; kAudioUnitType_MusicEffect if it needs MIDI
 #     [VST3_CATEGORIES <...>]      default Fx
 #     SOURCES <files...>)
 #
-# Shared by every GA plug-in: company GA, manufacturer code Gaau, VST3 and AU, no copy after build
+# Shared by every GA plug-in: VST3 and AU, no copy after build
 # (installing to /Library/Audio needs admin rights), link-time optimisation and dead-code stripping.
 function(ga_add_plugin target)
-    cmake_parse_arguments(GA "" "PRODUCT_NAME;PLUGIN_CODE;BUNDLE_ID;NEEDS_MIDI_INPUT;AU_MAIN_TYPE" "VST3_CATEGORIES;SOURCES" ${ARGN})
+    cmake_parse_arguments(GA "" "PRODUCT_NAME;PLUGIN_CODE;BUNDLE_ID;COMPANY;MANUFACTURER_CODE;NEEDS_MIDI_INPUT;AU_MAIN_TYPE" "VST3_CATEGORIES;SOURCES" ${ARGN})
+    if(NOT GA_COMPANY)
+        set(GA_COMPANY "GA")
+    endif()
+    if(NOT GA_MANUFACTURER_CODE)
+        set(GA_MANUFACTURER_CODE Gaau)
+    endif()
     if(NOT GA_NEEDS_MIDI_INPUT)
         set(GA_NEEDS_MIDI_INPUT FALSE)
     endif()
@@ -54,9 +62,9 @@ function(ga_add_plugin target)
     endif()
 
     juce_add_plugin(${target}
-        COMPANY_NAME "GA"
+        COMPANY_NAME "${GA_COMPANY}"
         BUNDLE_ID ${GA_BUNDLE_ID}
-        PLUGIN_MANUFACTURER_CODE Gaau
+        PLUGIN_MANUFACTURER_CODE ${GA_MANUFACTURER_CODE}
         PLUGIN_CODE ${GA_PLUGIN_CODE}
         FORMATS VST3 AU
         PRODUCT_NAME "${GA_PRODUCT_NAME}"

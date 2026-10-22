@@ -22,35 +22,54 @@ namespace
     }
 }
 
-BottomStrip::BottomStrip (juce::AudioProcessorValueTreeState& state, Host h)
+BottomStrip::BottomStrip (juce::AudioProcessorValueTreeState& state, Host h, const ProcessorConfig& config)
     : host (std::move (h)),
+      locks (config.dryWetLocks),
       dryWetValue (state.getRawParameterValue (pid::dryWet)),
-      dryWet   (parameter (state, pid::dryWet),   "Dry/Wet",   false, Knob::Style::mini),
-      bassMono (parameter (state, pid::bassMono), "Bass Mono", false, Knob::Style::mini),
-      osFactor (parameter (state, pid::osFactor), true, false),
-      osFilter (parameter (state, pid::osFilter), true, false)
+      dryWet (parameter (state, pid::dryWet), "Dry/Wet", false, Knob::Style::mini)
 {
     setInterceptsMouseClicks (false, true);   // only the controls, not the margin
 
-    for (auto* c : std::initializer_list<juce::Component*> { &bypass, &dryWet, &bassMono, &phaseProtect, &osFactor, &osFilter, &sizeBox,
-                                                             &correlation, &scopeButton })
-        addAndMakeVisible (c);
+    if (config.bassMono)
+        bassMono = std::make_unique<Knob> (parameter (state, pid::bassMono), "Bass Mono", false, Knob::Style::mini);
+    if (config.phaseProtect)
+        phaseProtect = std::make_unique<LedToggle> ("Phase Protect");
+    if (config.oversampling)
+    {
+        osFactor = std::make_unique<StepBox> (parameter (state, pid::osFactor), true, false);
+        osFilter = std::make_unique<StepBox> (parameter (state, pid::osFilter), true, false);
+    }
+    if (config.scope)
+        scopeButton = std::make_unique<SquareToggle> (SquareToggle::Icon::scope, false);
+
+    for (auto* c : std::initializer_list<juce::Component*> { &bypass, &dryWet, bassMono.get(), phaseProtect.get(), osFactor.get(), osFilter.get(),
+                                                             &sizeBox, &correlation, scopeButton.get() })
+        if (c != nullptr)
+            addAndMakeVisible (c);
 
     using ButtonAttachment = juce::AudioProcessorValueTreeState::ButtonAttachment;
     bypassAtt = std::make_unique<ButtonAttachment> (state, pid::bypass, bypass);
-    protectAtt = std::make_unique<ButtonAttachment> (state, pid::phaseProtect, phaseProtect);
+    if (phaseProtect != nullptr)
+        protectAtt = std::make_unique<ButtonAttachment> (state, pid::phaseProtect, *phaseProtect);
 
     // Dry/Wet and Bass Mono: click the name to lock the value against preset changes
-    for (auto [knob, id] : { std::pair<Knob*, const char*> { &dryWet, pid::dryWet }, { &bassMono, pid::bassMono } })
-        knob->setLockable ([this, id = id] { host.toggleLock (id); updateOutputControls(); });
+    if (locks)
+        for (auto [knob, id] : { std::pair<Knob*, const char*> { &dryWet, pid::dryWet }, { bassMono.get(), pid::bassMono } })
+            if (knob != nullptr)
+                knob->setLockable ([this, id = id] { host.toggleLock (id); updateOutputControls(); });
 
     bypass.setTooltip ("Bypass: click-free, at the same loudness as the effect. Dry/Wet at 0 % bypasses too.");
-    phaseProtect.setTooltip ("Phase Protect: keeps the effect mono-compatible. The LED flashes orange while it audibly pulls the width back.");
-    scopeButton.setTooltip ("Show / hide the goniometer");
-    osFilter.setTooltip ("Anti-alias filter: Linear Phase (cleanest, more latency) or Low Latency (minimal delay)");
+    if (phaseProtect != nullptr)
+        phaseProtect->setTooltip ("Phase Protect: keeps the effect mono-compatible. The LED flashes orange while it audibly pulls the width back.");
+    if (osFilter != nullptr)
+        osFilter->setTooltip ("Anti-alias filter: Linear Phase (cleanest, more latency) or Low Latency (minimal delay)");
     sizeBox.setTooltip ("Window size (or drag the bottom right corner)");
 
-    scopeButton.onClick = [this] { if (onScopeToggle != nullptr) onScopeToggle (scopeButton.getToggleState()); };
+    if (scopeButton != nullptr)
+    {
+        scopeButton->setTooltip ("Show / hide the goniometer");
+        scopeButton->onClick = [this] { if (onScopeToggle != nullptr) onScopeToggle (scopeButton->getToggleState()); };
+    }
 
     scopeL.assign (16384, 0.0f);
     scopeR.assign (16384, 0.0f);
@@ -93,10 +112,10 @@ void BottomStrip::timerCallback()
     updateOutputControls();
     updateMeters();
 
-    if (host.latencySamples() != shownLatency)
+    if (osFactor != nullptr && host.latencySamples() != shownLatency)
     {
         shownLatency = host.latencySamples();
-        osFactor.setTooltip (host.oversamplingTooltip + " Latency now: " + juce::String (shownLatency) + " samples.");
+        osFactor->setTooltip (host.oversamplingTooltip + " Latency now: " + juce::String (shownLatency) + " samples.");
     }
 }
 
@@ -107,8 +126,9 @@ void BottomStrip::updateDimming()
     if (dimmingKnown && off == allOff)
         return;
 
-    for (auto* c : { (juce::Component*) &dryWet, (juce::Component*) &bassMono })
-        c->setAlpha (off ? themeOf (*this).sizes.dimAlpha : 1.0f);
+    for (auto* c : { (juce::Component*) &dryWet, (juce::Component*) bassMono.get() })
+        if (c != nullptr)
+            c->setAlpha (off ? themeOf (*this).sizes.dimAlpha : 1.0f);
 
     allOff = off;
     dimmingKnown = true;
@@ -125,9 +145,14 @@ void BottomStrip::updateOutputControls()
         bypass.setEnabled (canBypass);
         bypass.setAlpha (canBypass ? 1.0f : 0.35f);
     }
-    phaseProtect.setAlpha (allOff ? themeOf (*this).sizes.dimAlpha : 1.0f);
-    dryWet.setLocked (host.isLocked (pid::dryWet));
-    bassMono.setLocked (host.isLocked (pid::bassMono));
+    if (phaseProtect != nullptr)
+        phaseProtect->setAlpha (allOff ? themeOf (*this).sizes.dimAlpha : 1.0f);
+    if (locks)
+    {
+        dryWet.setLocked (host.isLocked (pid::dryWet));
+        if (bassMono != nullptr)
+            bassMono->setLocked (host.isLocked (pid::bassMono));
+    }
 }
 
 void BottomStrip::updateMeters()
@@ -159,7 +184,7 @@ void BottomStrip::updateMeters()
         correlation.setTarget ((float) (accLR / std::sqrt (accLL * accRR + 1.0e-30)), true);
     }
 
-    if (scopeButton.getToggleState() && onScopeData != nullptr)
+    if (scopeButton != nullptr && scopeButton->getToggleState() && onScopeData != nullptr)
         onScopeData (scopeL.data(), scopeR.data(), n);
 
     // Phase Protect making an audible difference (side pulled back by more than 2 dB): its LED
@@ -169,10 +194,10 @@ void BottomStrip::updateMeters()
     if (! allOff && host.protectActivity() > 0.206f)   // 1 - 10^(-2/20)
         protectHoldUntil = now + 500.0;
     const float flash = now < protectHoldUntil ? 0.5f + 0.5f * std::cos ((float) (now * 0.001) * juce::MathConstants<float>::twoPi * 1.4f) : 0.0f;
-    if (std::abs (flash - protectFlash) > 0.01f)
+    if (phaseProtect != nullptr && std::abs (flash - protectFlash) > 0.01f)
     {
         protectFlash = flash;
-        phaseProtect.setAlarm (flash);
+        phaseProtect->setAlarm (flash);
     }
 }
 
@@ -189,15 +214,17 @@ void BottomStrip::resized()
     const int x0 = kMargin, y0 = kMargin;
     const int scy = y0 + kBoxHeight / 2;
 
+    auto place = [] (juce::Component* c, int x, int y, int w, int h) { if (c != nullptr) c->setBounds (x, y, w, h); };
+
     bypass.setBounds   (x0 + kSdBypass, scy - 9, 18, 18);
     dryWet.setBounds   (x0 + kSdDryWet, y0 + 1, 78, kBoxHeight - 2);
-    bassMono.setBounds (x0 + kSdBass,   y0 + 1, 86, kBoxHeight - 2);
-    phaseProtect.setBounds (x0 + kSdProtect, scy - 9, kSdProtectW, 18);
-    osFactor.setBounds (x0 + kSdOs,   scy - 8, 38, 17);
-    osFilter.setBounds (x0 + kSdFilt, scy - 8, 84, 17);
+    place (bassMono.get(), x0 + kSdBass, y0 + 1, 86, kBoxHeight - 2);
+    place (phaseProtect.get(), x0 + kSdProtect, scy - 9, kSdProtectW, 18);
+    place (osFactor.get(), x0 + kSdOs,   scy - 8, 38, 17);
+    place (osFilter.get(), x0 + kSdFilt, scy - 8, 84, 17);
     sizeBox.setBounds  (x0 + kSdSize, scy - 8, 42, 17);
 
     correlation.setBounds (x0 + kCorX + 7, y0, kSdMeterW, kBoxHeight);
-    scopeButton.setBounds (x0 + kCorX + kCorW - 26, scy - 9, 18, 18);
+    place (scopeButton.get(), x0 + kCorX + kCorW - 26, scy - 9, 18, 18);
 }
 }

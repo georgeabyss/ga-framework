@@ -22,8 +22,8 @@ ga_add_plugin(MyPlugin
 ga_add_tool(MyPlugin MyPluginTests OPTION MYPLUGIN_TESTS SOURCES tools/Tests.cpp MAIN tools/TestsMain.cpp)
 ```
 
-`ga_add_plugin()` sets what every GA plug-in shares: company GA, manufacturer code `Gaau`, VST3 and
-Audio Unit, link-time optimisation and dead-code stripping. `ga_add_tool()` builds a command-line tool
+`ga_add_plugin()` sets what every GA plug-in shares: VST3 and Audio Unit, link-time optimisation and
+dead-code stripping. Company and manufacturer code default to GA and `Gaau` (`COMPANY`, `MANUFACTURER_CODE`). `ga_add_tool()` builds a command-line tool
 that runs the plug-in's own code, only when its option is on.
 
 JUCE is pinned: every GA build uses the version in `cmake/juce-version.txt`, locally and in CI, and
@@ -101,6 +101,7 @@ the factory presets (the first one is the default) and an optional tag shown in 
 | File | |
 | --- | --- |
 | `plugin/ProcessorBase.h` | `ga::ProcessorBase`, the `AudioProcessor` every GA effect derives from: stereo or mono, oversampling (Off / 2x / 4x / 8x, linear phase or low latency, latency reported), click-free bypass at the effect's loudness, safety mute, the scope buffer for the meters, state save / load. The plug-in implements `prepareWet`, `updateWetParams`, `processWet`, `resetWet`, and optionally `splitAtNoteOns` / `noteOn` (sample-accurate note-ons) and `migrateState` (old sessions) |
+| `plugin/ProcessorConfig.h` | `ga::ProcessorConfig`: the features a plug-in uses (oversampling, Bass Mono, Phase Protect, loudness match, scope, Dry/Wet locks, MIDI input) and the limits (safety level, oversampling factors, window sizes, corner-drag scale). A feature that is off has no parameter and is not in the bottom strip. The defaults are Hyper! Hyper! Dimension; pass the same config to `ProcessorBase` and `addSharedParameters()` |
 | `plugin/SharedParams.h` | `ga::addSharedParameters()`: Bass Mono, Dry/Wet, Bypass, Oversampling, Anti-Alias Filter, Phase Protect, appended after the plug-in's own parameters |
 | `plugin/SharedIds.h` | `ga::pid` and `ga::prop`: the shared parameter IDs (`mix`, `bassmono`, `bypass`, `os`, `osfilter`, `phaseguard`) and state properties (`scopeOpen`, `uiScale`, `preset`, `presetUser`, `lockDryWet`, `lockBassMono`); never change them |
 
@@ -108,7 +109,7 @@ the factory presets (the first one is the default) and an optional tag shown in 
 class MyProcessor : public ga::ProcessorBase
 {
 public:
-    MyProcessor() : ga::ProcessorBase (createParameterLayout()) {}   // own parameters, then ga::addSharedParameters()
+    MyProcessor() : ga::ProcessorBase (createParameterLayout(), config()) {}   // own parameters, then ga::addSharedParameters (p, config())
 private:
     void prepareWet (double sampleRate, int channels, int oversampling) override;
     void updateWetParams() override;

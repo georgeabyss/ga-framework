@@ -5,29 +5,28 @@ namespace ga
 {
 namespace
 {
-    constexpr float kSizes[] = { 0.75f, 1.0f, 1.25f, 1.5f, 1.75f, 2.0f };
-    constexpr float kMinScale = 0.6f, kMaxScale = 2.5f;   // dragging the corner
 }
 
-EditorShell::EditorShell (juce::AudioProcessor& p, juce::AudioProcessorValueTreeState& s, BottomStrip::Host host, Theme theme)
-    : AudioProcessorEditor (&p), state (s), laf (std::move (theme)), strip (s, std::move (host))
+EditorShell::EditorShell (ProcessorBase& p, juce::AudioProcessorValueTreeState& s, BottomStrip::Host host, Theme theme)
+    : AudioProcessorEditor (&p), state (s), config (p.getConfig()), laf (std::move (theme)), strip (s, std::move (host), p.getConfig())
 {
     setLookAndFeel (&laf);
 
-    strip.sizeBox.getItems = []
+    strip.sizeBox.getItems = [this]
     {
         juce::StringArray items;
-        for (float sc : kSizes) items.add (juce::String (juce::roundToInt (sc * 100.0f)) + "%");
+        for (float sc : menuSizes()) items.add (juce::String (juce::roundToInt (sc * 100.0f)) + "%");
         return items;
     };
     strip.sizeBox.getSelected = [this]
     {
-        for (int i = 0; i < (int) std::size (kSizes); ++i)
-            if (std::abs (kSizes[i] - currentScale()) < 0.01f) return i;
+        const auto sizes = menuSizes();
+        for (int i = 0; i < (int) sizes.size(); ++i)
+            if (std::abs (sizes[(size_t) i] - currentScale()) < 0.01f) return i;
         return -1;
     };
     strip.sizeBox.getText = [this] { return juce::String (juce::roundToInt (currentScale() * 100.0f)) + "%"; };
-    strip.sizeBox.onSelect = [this] (int i) { applyScale (kSizes[i]); };
+    strip.sizeBox.onSelect = [this] (int i) { applyScale (menuSizes()[(size_t) i]); };
 
     strip.onScopeToggle = [this] (bool open) { setScopeOpen (open); };
     strip.onScopeData = [this] (const float* l, const float* r, int n) { goniometer.push (l, r, n); };
@@ -46,7 +45,7 @@ void EditorShell::setPanel (Panel& p, int w, int h, int mx, int my)
     marginX = mx;
     addAndMakeVisible (faceplate);   // first, so the panel already sees the theme while it lays out
 
-    const bool open = (bool) state.state.getProperty (prop::scopeOpen, false);   // saved with the session
+    const bool open = config.scope && (bool) state.state.getProperty (prop::scopeOpen, false);   // saved with the session
     strip.setScopeOpen (open);
     goniometer.setVisible (open);
 
@@ -76,6 +75,20 @@ int EditorShell::contentWidth() const
     return baseWidth + (goniometer.isVisible() ? scopeBox().getRight() + marginX - baseWidth : 0);
 }
 
+std::vector<float> EditorShell::menuSizes() const
+{
+    // the screen the editor is on (or the main one), less the menu bar and dock
+    const auto& displays = juce::Desktop::getInstance().getDisplays();
+    const auto* display = isShowing() ? displays.getDisplayForRect (getScreenBounds()) : displays.getPrimaryDisplay();
+
+    std::vector<float> sizes;
+    for (float sc : config.windowSizes)
+        if (display == nullptr || sizes.empty()
+            || ((float) contentWidth() * sc <= display->userBounds.getWidth() && (float) baseHeight * sc <= display->userBounds.getHeight()))
+            sizes.push_back (sc);   // the smallest always stays
+    return sizes;
+}
+
 void EditorShell::setScopeOpen (bool open)
 {
     state.state.setProperty (prop::scopeOpen, open, nullptr);
@@ -89,13 +102,13 @@ void EditorShell::updateConstraints()
 {
     const double w = (double) contentWidth(), h = (double) baseHeight;
     constrainer.setFixedAspectRatio (w / h);
-    constrainer.setSizeLimits (juce::roundToInt (w * kMinScale), juce::roundToInt (h * kMinScale),
-                               juce::roundToInt (w * kMaxScale), juce::roundToInt (h * kMaxScale));
+    constrainer.setSizeLimits (juce::roundToInt (w * config.minScale), juce::roundToInt (h * config.minScale),
+                               juce::roundToInt (w * config.maxScale), juce::roundToInt (h * config.maxScale));
 }
 
 void EditorShell::applyScale (float scale)
 {
-    scale = juce::jlimit (kMinScale, kMaxScale, scale);
+    scale = juce::jlimit (config.minScale, config.maxScale, scale);
     setSize (juce::roundToInt ((float) contentWidth() * scale), juce::roundToInt ((float) baseHeight * scale));
 }
 

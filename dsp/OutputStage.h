@@ -25,6 +25,7 @@ public:
         float dryWet = 1.0f;        // 0..1
         float bassMonoHz = 20.0f;   // everything below is made mono; <= 20 = off
         bool  phaseProtect = true;  // keep the correlation the effect adds above kGuardFloor
+        bool  loudnessMatch = true; // keep the output as loud as the input (ProcessorConfig::loudnessMatch)
     };
 
     std::atomic<float> protectActivity { 0.0f };   // how far Phase Protect is pulling back right now, 0..1
@@ -42,7 +43,8 @@ public:
         if (bassMonoOn)
             bassMono (outL, outR);
         phaseProtect (l, r, outL, outR);
-        loudnessMatch (l, r, outL, outR);
+        if (prm.loudnessMatch)
+            loudnessMatch (l, r, outL, outR);
     }
     // once per block, after the samples (updates protectActivity)
     void endBlock();

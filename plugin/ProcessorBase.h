@@ -3,6 +3,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <juce_dsp/juce_dsp.h>
 #include "SharedIds.h"
+#include "ProcessorConfig.h"
 
 namespace ga
 {
@@ -13,11 +14,12 @@ namespace ga
 //   scope          the output samples for the correlation meter and the goniometer
 //   state          the parameters and properties, saved as XML; migrateState() for old sessions
 // The plug-in implements the effect ("wet") through the virtual functions below; the shared
-// parameters (ga::addSharedParameters) must be in its layout.
+// parameters (ga::addSharedParameters, with the same config) must be in its layout. The config
+// switches features off and sets the limits.
 class ProcessorBase : public juce::AudioProcessor
 {
 public:
-    explicit ProcessorBase (juce::AudioProcessorValueTreeState::ParameterLayout);
+    explicit ProcessorBase (juce::AudioProcessorValueTreeState::ParameterLayout, ProcessorConfig = {});
     ~ProcessorBase() override = default;
 
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
@@ -26,6 +28,11 @@ public:
     void processBlock (juce::AudioBuffer<float>&, juce::MidiBuffer&) override;
 
     bool hasEditor() const override { return true; }
+    bool acceptsMidi() const override { return config.midiInput; }
+    bool producesMidi() const override { return false; }
+    bool isMidiEffect() const override { return false; }
+
+    const ProcessorConfig& getConfig() const { return config; }
 
     int getNumPrograms() override { return 1; }
     int getCurrentProgram() override { return 0; }
@@ -45,15 +52,15 @@ public:
     // the Bypass button, or Dry/Wet at 0: both bypass the whole effect (and dim the editor)
     bool isBypassedNow() const;
 
-    // Safety mute: absurd levels (above +24 dBFS) or broken audio (NaN, infinity) silence the
-    // output until resumeAfterSafetyMute() is called.
+    // Safety mute: absurd levels (above the config's safety level, +24 dBFS) or broken audio (NaN,
+    // infinity) silence the output until resumeAfterSafetyMute() is called.
     bool isSafetyMuted() const { return safetyMuted; }
     void resumeAfterSafetyMute() { resumeRequested = true; }
 
     juce::AudioProcessorValueTreeState apvts;
 
 protected:
-    static constexpr int kMaxOsStages = 3;   // 2x, 4x, 8x
+    static constexpr int kMaxOsStages = 3;   // 2x, 4x, 8x at most
 
     // the effect. prepareWet: sampleRate is the rate it runs at (already multiplied by the
     // oversampling factor); it is called once with the highest rate first, so later calls at lower
@@ -63,7 +70,7 @@ protected:
     virtual void processWet (float* const* io, int numSamples) = 0;
     virtual void resetWet() = 0;             // clear all delay lines and filters
 
-    // optional: split the block at every note-on, so noteOn() lands on the exact sample (Retrig)
+    // optional, with MIDI input: split the block at every note-on, so noteOn() lands on the exact sample (Retrig)
     virtual bool splitAtNoteOns() const { return false; }
     virtual void noteOn() {}
 
@@ -85,7 +92,10 @@ private:
     void silence (juce::AudioBuffer<float>&);   // the safety mute
     void resetDsp();
 
-    static constexpr float kAbsurdLevel = 15.85f;   // +24 dBFS
+    const ProcessorConfig config;
+    int maxOsStages = 0;                            // of the config's highest oversampling factor
+    std::atomic<float>* osFactorValue = nullptr;    // null without oversampling
+    std::atomic<float>* osFilterValue = nullptr;
     std::atomic<bool> safetyMuted { false }, resumeRequested { false };
 
     juce::AudioProcessorParameter* bypassParam = nullptr;

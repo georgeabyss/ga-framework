@@ -3,12 +3,26 @@
 namespace ga
 {
 
-ProcessorBase::ProcessorBase (juce::AudioProcessorValueTreeState::ParameterLayout layout)
+ProcessorBase::ProcessorBase (juce::AudioProcessorValueTreeState::ParameterLayout layout, ProcessorConfig c)
     : AudioProcessor (BusesProperties()
                           .withInput  ("Input",  juce::AudioChannelSet::stereo(), true)
                           .withOutput ("Output", juce::AudioChannelSet::stereo(), true)),
-      apvts (*this, nullptr, "STATE", std::move (layout))
+      apvts (*this, nullptr, "STATE", std::move (layout)),
+      config (std::move (c))
 {
+   #ifdef JucePlugin_WantsMidiInput
+    jassert (config.midiInput == (bool) JucePlugin_WantsMidiInput);   // ga_add_plugin (NEEDS_MIDI_INPUT) must agree
+   #endif
+    if (config.oversampling)
+    {
+        for (int f : config.oversamplingFactors)
+        {
+            jassert (juce::isPowerOfTwo (f) && f <= (1 << kMaxOsStages));
+            maxOsStages = juce::jmax (maxOsStages, juce::jlimit (0, kMaxOsStages, juce::roundToInt (std::log2 ((double) f))));
+        }
+        osFactorValue = apvts.getRawParameterValue (pid::osFactor);
+        osFilterValue = apvts.getRawParameterValue (pid::osFilter);
+    }
     bypassParam = apvts.getParameter (pid::bypass);
     scopeL.assign ((size_t) kScopeSize, 0.0f);
     scopeR.assign ((size_t) kScopeSize, 0.0f);
@@ -35,7 +49,7 @@ void ProcessorBase::prepareToPlay (double sampleRate, int samplesPerBlock)
 
     using OS = juce::dsp::Oversampling<float>;
     for (int f = 0; f < 2; ++f)
-        for (int s = 0; s < kMaxOsStages; ++s)
+        for (int s = 0; s < maxOsStages; ++s)
         {
             auto& o = oversamplers[f][s];
             if (o == nullptr)
@@ -45,7 +59,7 @@ void ProcessorBase::prepareToPlay (double sampleRate, int samplesPerBlock)
             o->initProcessing ((size_t) maxBlock);
         }
 
-    prepareWet (sampleRate * (1 << kMaxOsStages), numCh, 1 << kMaxOsStages);   // allocate for the highest rate
+    prepareWet (sampleRate * (1 << maxOsStages), numCh, 1 << maxOsStages);   // allocate for the highest rate
     osStages = osFilter = -1;
     updateOversampling();
     fadeIn = false;
@@ -57,8 +71,14 @@ void ProcessorBase::prepareToPlay (double sampleRate, int samplesPerBlock)
 
 void ProcessorBase::updateOversampling()
 {
-    const int stages = juce::jlimit (0, kMaxOsStages, (int) (param (pid::osFactor) + 0.5f));
-    const int filter = juce::jlimit (0, 1, (int) (param (pid::osFilter) + 0.5f));
+    int stages = 0, filter = 0;
+    if (osFactorValue != nullptr)
+    {
+        const auto& factors = config.oversamplingFactors;
+        const int index = juce::jlimit (0, (int) factors.size() - 1, (int) (osFactorValue->load() + 0.5f));
+        stages = juce::jlimit (0, maxOsStages, juce::roundToInt (std::log2 ((double) factors[(size_t) index])));
+        filter = juce::jlimit (0, 1, (int) (osFilterValue->load() + 0.5f));
+    }
     if (stages == osStages && filter == osFilter)
         return;
 
@@ -139,7 +159,7 @@ void ProcessorBase::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBu
         processSegment (buffer, done, end - done);
         done = end;
     };
-    if (splitAtNoteOns())
+    if (config.midiInput && splitAtNoteOns())
         for (const auto meta : midi)
             if (meta.getMessage().isNoteOn())
             {
@@ -171,7 +191,7 @@ bool ProcessorBase::isAbsurd (const juce::AudioBuffer<float>& buffer) const
     {
         const auto* x = buffer.getReadPointer (ch);
         for (int i = 0; i < buffer.getNumSamples(); ++i)
-            if (! (std::abs (x[i]) <= kAbsurdLevel))   // also catches NaN and infinity
+            if (! (std::abs (x[i]) <= config.safetyLevel))   // also catches NaN and infinity
                 return true;
     }
     return false;
