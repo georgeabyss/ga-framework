@@ -216,7 +216,7 @@ namespace
             solo.setToggleState (b.soloed, dontSendNotification);
             auto& stereo = s.make<ga::StepBox> (choice (s, "stereo", { "L / R", "M / S" }, 1), true);
             card.setControls (&led, &solo, &stereo);
-            card.setName (b.name);
+            card.setBandName (b.name);
             card.setInfo (b.info, String::fromUTF8 (b.range), String::fromUTF8 (b.status));
             card.setTraces (burst (b.decay, 40.0f), b.selected ? burst (b.decay * 0.4f, 25.0f) : ga::BandCard::Trace {});
             card.setSelected (b.selected);

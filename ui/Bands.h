@@ -23,7 +23,7 @@ public:
     // drop-down bottom left (each keeps its own size); any may be null
     void setControls (juce::Component* led, juce::Component* solo, juce::Component* dropdown);
 
-    void setName (const juce::String&);
+    void setBandName (const juce::String&);
     void setInfo (const juce::String& topRight, const juce::String& range, const juce::String& status);
 
     // a trace: per column the lowest and highest value (-1..1), drawn over the card's width

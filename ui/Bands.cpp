@@ -28,7 +28,7 @@ void BandCard::setControls (juce::Component* l, juce::Component* s, juce::Compon
     resized();
 }
 
-void BandCard::setName (const juce::String& n)                 { name = n; repaint(); }
+void BandCard::setBandName (const juce::String& n)             { name = n; repaint(); }
 void BandCard::setSelected (bool s)                            { if (s != selected) { selected = s; repaint(); } }
 void BandCard::setActive (bool a)                              { if (a != active) { active = a; repaint(); } }
 
