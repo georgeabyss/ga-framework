@@ -50,27 +50,38 @@ Compiled into every plug-in by `ga_add_plugin()`; include as `#include "ui/Contr
 | `ui/Style.h` | `ga::ui`: colours, fonts, drawing (recess, inset panel, knob faces, LED, padlock, screw), `drawTitle()`, `drawLogo()`; `ga::LookAndFeel` for menus, tooltips and dialogs |
 | `ui/Controls.h` | `ga::Knob` (regular and mini, lockable), `StepBox`, `LampButton`, `SquareToggle`, `SectionLed`, `LedToggle`, `MenuBox` |
 | `ui/Meters.h` | `ga::CorrelationMeter`, `ga::Goniometer` |
-| `ui/BottomStrip.h` | `ga::BottomStrip`: Bypass, Dry/Wet, Bass Mono \| oversampling, filter, window size \| correlation, Phase Protect, goniometer button. Asks the plug-in through a small `Host` struct of callbacks |
-| `ui/EditorShell.h` | `ga::EditorShell`: the editor itself. Faceplate, rack screws, bottom strip, goniometer side panel, scaling (75–200 %, corner drag), scale and goniometer saved with the session. The plug-in derives from it and hands over its panel and size |
+| `ui/BottomStrip.h` | `ga::BottomStrip`: Bypass, Dry/Wet, Bass Mono \| oversampling, filter, window size \| correlation, Phase Protect, goniometer button. Asks the plug-in through a small `Host` struct of callbacks. Native size 750 × 28, scaled as one piece: `setArea()` fills the area as far as its proportions allow, centred |
+| `ui/Header.h` | `ga::Header`: the title row. Title and subtitle on the row's left edge, the gothic GA on its right edge, the preset bar centred between them, with an optional nudge (`setPresetBar (height, offsetX)`) |
+| `ui/EditorShell.h` | `ga::EditorShell`: the editor itself. Faceplate, rack screws, bottom strip, goniometer side panel, scaling (75–200 %, corner drag), scale and goniometer saved with the session. The plug-in derives from it and hands over its panel (a `ga::Panel`), its size and its margin |
 
 ```cpp
 class MyEditor : public ga::EditorShell
 {
 public:
-    MyEditor (MyProcessor& p) : ga::EditorShell (p, p.apvts, stripHost (p)), panel (p) { setPanel (panel, 802, 192); }
+    MyEditor (MyProcessor& p) : ga::EditorShell (p, p.apvts, stripHost (p)), panel (p) { setPanel (panel, 802, 192, 26, 8); }
 private:
-    MyPanel panel;   // transparent: title and the plug-in's own sections
+    MyPanel panel;   // a ga::Panel, transparent: the header, the plug-in's own sections and the bottom strip
 };
 ```
 
-The window size stays in each plug-in.
+Framework components never know the window size or a plug-in's margins: they fill or centre
+themselves in the area they are given. Each plug-in defines its layout once, as a few named values,
+and places everything in `ga::Panel::layout()`:
+
+```cpp
+void MyPanel::layout (juce::Rectangle<int> content, ga::BottomStrip& strip)   // the window minus the margin
+{
+    header.setArea (content.removeFromTop (kHeaderHeight));
+    strip.setArea (content.removeFromBottom (ga::BottomStrip::heightForWidth (content.getWidth())));
+}
+```
 
 ## Presets (presets/)
 
 | File | |
 | --- | --- |
 | `presets/PresetManager.h` | `ga::PresetManager`: factory and user presets as one list, save / rename / delete, locks (a locked value stays when a preset loads), the modified flag. Values missing from a preset are the defaults |
-| `presets/PresetBar.h` | `ga::PresetBar`: the dot-matrix preset browser with previous / next, the list, Save / Rename / Delete and the safety-mute warning |
+| `presets/PresetBar.h` | `ga::PresetBar`: the dot-matrix preset browser with previous / next, the list, Save / Rename / Delete and the safety-mute warning. Native size 238 × 24, scaled to fit its bounds, centred |
 
 Each plug-in describes its presets in a `ga::PresetManager::Config`: the folder, file extension and
 file tag (never change these after a release), the parameters a preset stores, the lockable parameters,

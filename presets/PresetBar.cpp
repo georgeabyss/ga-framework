@@ -95,9 +95,21 @@ void PresetBar::refresh()
     }
 }
 
+int PresetBar::widthForHeight (int height)
+{
+    return juce::roundToInt ((float) height * (float) kWidth / (float) kHeight);
+}
+
+juce::AffineTransform PresetBar::fit() const
+{
+    const float scale = juce::jmin ((float) getWidth() / (float) kWidth, (float) getHeight() / (float) kHeight);
+    const auto r = juce::Rectangle<float> ((float) kWidth * scale, (float) kHeight * scale).withCentre (getLocalBounds().toFloat().getCentre());
+    return juce::AffineTransform::scale (scale).translated (r.getX(), r.getY());
+}
+
 juce::Rectangle<float> PresetBar::zoneRect (Zone z) const
 {
-    const auto b = getLocalBounds().toFloat();
+    const auto b = juce::Rectangle<float> ((float) kWidth, (float) kHeight);
     switch (z)
     {
         case Zone::prev:    return b.withWidth (kArrowW);
@@ -110,6 +122,7 @@ juce::Rectangle<float> PresetBar::zoneRect (Zone z) const
 
 PresetBar::Zone PresetBar::zoneAt (juce::Point<float> p) const
 {
+    p = p.transformedBy (fit().inverted());
     for (auto z : { Zone::prev, Zone::display, Zone::next })
         if (zoneRect (z).contains (p))
             return z;
@@ -118,6 +131,8 @@ PresetBar::Zone PresetBar::zoneAt (juce::Point<float> p) const
 
 void PresetBar::paint (juce::Graphics& g)
 {
+    if (const auto t = fit(); ! t.isIdentity())
+        g.addTransform (t);
     paintArrowButton (g, Zone::prev);
     paintArrowButton (g, Zone::next);
     paintDisplay (g, zoneRect (Zone::display));
@@ -282,7 +297,7 @@ void PresetBar::showMenu()
     menuOpen = true;
     repaint();
     juce::Component::SafePointer<PresetBar> safe (this);
-    m.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (this).withMinimumWidth ((int) zoneRect (Zone::display).getWidth()),
+    m.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (this).withMinimumWidth ((int) zoneRect (Zone::display).transformedBy (fit()).getWidth()),
                      [safe, current, currentIsUser] (int id)
     {
         if (safe == nullptr)

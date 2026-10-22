@@ -15,6 +15,17 @@ namespace ga::ui
                                               bold ? juce::Font::bold : juce::Font::plain));
     }
 
+    namespace
+    {
+        juce::Font titleFont() { return font (24.0f, true, 0.075f); }
+
+        const juce::Path& logoPath()
+        {
+            static const juce::Path gothicGA = makeGothicGA (0.75f, 6.2f, 38.0f);   // built once
+            return gothicGA;
+        }
+    }
+
     juce::Point<float> polar (juce::Point<float> c, float r, float angle)
     {
         return { c.x + std::sin (angle) * r, c.y - std::cos (angle) * r };
@@ -291,12 +302,12 @@ namespace ga::ui
         g.fillPath (tri);
     }
 
-    void drawTitle (juce::Graphics& g, const juce::String& title, const juce::String& subtitle)
+    void drawTitle (juce::Graphics& g, const juce::String& title, const juce::String& subtitle, float x, float baseline)
     {
         // title in purple: static unison echo, shadow, gradient fill
         {
             juce::GlyphArrangement ga;
-            ga.addLineOfText (font (24.0f, true, 0.075f), title, 30.0f, 31.0f);
+            ga.addLineOfText (titleFont(), title, x, baseline);
             juce::Path p;
             ga.createPath (p);
             for (auto e : { std::pair<float, float> { 7.0f, 0.07f }, { 3.5f, 0.14f } })
@@ -305,21 +316,31 @@ namespace ga::ui
                 g.fillPath (p, juce::AffineTransform::translation (e.first, 0.0f));
             }
             juce::DropShadow (juce::Colours::black.withAlpha (0.6f), 5, { 0, 2 }).drawForPath (g, p);
-            juce::ColourGradient tg (juce::Colour (0xffeadfff), 0.0f, 13.0f, juce::Colour (0xff7c55d6), 0.0f, 32.0f, false);
+            juce::ColourGradient tg (juce::Colour (0xffeadfff), 0.0f, baseline - 18.0f, juce::Colour (0xff7c55d6), 0.0f, baseline + 1.0f, false);
             tg.addColour (0.55, purple);
             g.setGradientFill (tg);
             g.fillPath (p);
         }
         g.setColour (juce::Colour (0xff7d8087));
         g.setFont (font (7.5f, false, 0.37f));
-        g.drawText (subtitle, 32, 35, 200, 10, juce::Justification::centredLeft, false);
+        g.drawText (subtitle, juce::roundToInt (x) + 2, juce::roundToInt (baseline) + 4, 200, 10, juce::Justification::centredLeft, false);
+    }
+
+    float titleWidth (const juce::String& title)
+    {
+        juce::GlyphArrangement ga;
+        ga.addLineOfText (titleFont(), title, 0.0f, 0.0f);
+        return ga.getBoundingBox (0, -1, true).getRight();
+    }
+
+    juce::Rectangle<float> logoSize()
+    {
+        return logoPath().getBounds().withZeroOrigin();
     }
 
     void drawLogo (juce::Graphics& g, float right, float top)
     {
-        static const juce::Path gothicGA = makeGothicGA (0.75f, 6.2f, 38.0f);   // built once
-
-        auto ga = gothicGA;
+        auto ga = logoPath();
         const auto b = ga.getBounds();
         const float ox = right - b.getRight(), oy = top - b.getY();
         ga.applyTransform (juce::AffineTransform::translation (ox, oy));

@@ -4,15 +4,25 @@
 
 namespace ga
 {
-// The editor every GA plug-in shares: one long faceplate with the plug-in's own panel on it, the
-// bottom strip along its bottom edge and the goniometer opening to the right. Laid out at 100 % and
-// scaled as a whole: drag the corner (fixed aspect ratio) or pick a size in the bottom strip.
-// The scale and whether the goniometer is open are saved with the session.
+// The plug-in's panel on the editor shell: transparent, as large as the window at 100 %. It gets the
+// content area once (the window minus the plug-in's margin) and lays out everything in it, the
+// bottom strip included.
+class Panel : public juce::Component
+{
+public:
+    // called once, before the panel gets its size
+    virtual void layout (juce::Rectangle<int> content, BottomStrip&) = 0;
+};
+
+// The editor every GA plug-in shares: one long faceplate with the plug-in's panel on it, the bottom
+// strip (placed by the panel) and the goniometer opening to the right. Laid out at 100 % and scaled
+// as a whole: drag the corner (fixed aspect ratio) or pick a size in the bottom strip. The scale and
+// whether the goniometer is open are saved with the session.
 //
 //   class MyEditor : public ga::EditorShell
 //   {
-//       MyEditor (MyProcessor& p) : ga::EditorShell (p, p.apvts, host), panel (p) { setPanel (panel, 802, 192); }
-//       MyPanel panel;   // transparent; draws the title and its own sections
+//       MyEditor (MyProcessor& p) : ga::EditorShell (p, p.apvts, host), panel (p) { setPanel (panel, 802, 192, 26, 8); }
+//       MyPanel panel;   // a ga::Panel: draws and places its own sections and the bottom strip
 //   };
 class EditorShell : public juce::AudioProcessorEditor
 {
@@ -23,8 +33,9 @@ public:
     void resized() override;
 
 protected:
-    // call once from the plug-in's editor constructor; the panel's size at 100 % includes the bottom strip
-    void setPanel (juce::Component& panel, int baseWidth, int baseHeight);
+    // call once from the plug-in's editor constructor: the window size at 100 % and the margin
+    // around the content, left and right (marginX) and top and bottom (marginY)
+    void setPanel (Panel& panel, int baseWidth, int baseHeight, int marginX, int marginY);
 
 private:
     // the faceplate itself: background, rack screws and the goniometer box
@@ -47,8 +58,8 @@ private:
     Faceplate faceplate { *this };
     BottomStrip strip;
     Goniometer goniometer;
-    juce::Component* panel = nullptr;
-    int baseWidth = 0, baseHeight = 0;
+    Panel* panel = nullptr;
+    int baseWidth = 0, baseHeight = 0, marginX = 0;
     juce::ComponentBoundsConstrainer constrainer;
     juce::TooltipWindow tooltips { this, 900 };
 

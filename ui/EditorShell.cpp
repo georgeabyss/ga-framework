@@ -7,9 +7,6 @@ namespace
 {
     constexpr float kSizes[] = { 0.75f, 1.0f, 1.25f, 1.5f, 1.75f, 2.0f };
     constexpr float kMinScale = 0.6f, kMaxScale = 2.5f;   // dragging the corner
-
-    constexpr int kSideMargin = 26;          // left and right of the plug-in's sections and the bottom strip
-    constexpr int kStripFromBottom = 36;     // top of the bottom strip, from the bottom edge
 }
 
 EditorShell::EditorShell (juce::AudioProcessor& p, juce::AudioProcessorValueTreeState& s, BottomStrip::Host host)
@@ -41,11 +38,12 @@ EditorShell::~EditorShell()
     setLookAndFeel (nullptr);
 }
 
-void EditorShell::setPanel (juce::Component& p, int w, int h)
+void EditorShell::setPanel (Panel& p, int w, int h, int mx, int my)
 {
     panel = &p;
     baseWidth = w;
     baseHeight = h;
+    marginX = mx;
 
     const bool open = (bool) state.state.getProperty (prop::scopeOpen, false);   // saved with the session
     strip.setScopeOpen (open);
@@ -54,9 +52,8 @@ void EditorShell::setPanel (juce::Component& p, int w, int h)
     faceplate.addAndMakeVisible (p);
     faceplate.addAndMakeVisible (strip);
     faceplate.addChildComponent (goniometer);
+    p.layout (juce::Rectangle<int> (w, h).reduced (mx, my), strip);
     p.setBounds (0, 0, w, h);
-    strip.setBounds (kSideMargin - BottomStrip::kMargin, h - kStripFromBottom - BottomStrip::kMargin,
-                     w - 2 * kSideMargin + 2 * BottomStrip::kMargin, BottomStrip::kBoxHeight + 2 * BottomStrip::kMargin);
     goniometer.setBounds (scopeBox().reduced (6));
     addAndMakeVisible (faceplate);
 
@@ -76,7 +73,7 @@ juce::Rectangle<int> EditorShell::scopeBox() const
 int EditorShell::contentWidth() const
 {
     // open: the goniometer box plus the same margin on its right as on the left
-    return baseWidth + (goniometer.isVisible() ? scopeBox().getRight() + kSideMargin - baseWidth : 0);
+    return baseWidth + (goniometer.isVisible() ? scopeBox().getRight() + marginX - baseWidth : 0);
 }
 
 void EditorShell::setScopeOpen (bool open)

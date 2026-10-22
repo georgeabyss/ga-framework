@@ -8,7 +8,8 @@ namespace
     // box widths and x positions inside the boxes, from the strip's left edge (inside the margin)
     constexpr int kOutX = 0, kOutW = 214;                     // Bypass, Dry/Wet, Bass Mono
     constexpr int kSetX = kOutX + kOutW + 4, kSetW = 184;     // oversampling, filter, size
-    constexpr int kCorX = kSetX + kSetW + 4;                  // correlation, Phase Protect, goniometer: the rest
+    constexpr int kCorX = kSetX + kSetW + 4;                  // correlation, Phase Protect, goniometer
+    constexpr int kCorW = BottomStrip::kWidth - kCorX;
 
     constexpr int kSdBypass = kOutX + 9, kSdDryWet = kOutX + 36, kSdBass = kOutX + 118;
     constexpr int kSdOs = kSetX + 8, kSdFilt = kSdOs + 41, kSdSize = kSdFilt + 87;
@@ -61,6 +62,29 @@ BottomStrip::BottomStrip (juce::AudioProcessorValueTreeState& state, Host h)
 BottomStrip::~BottomStrip()
 {
     stopTimer();
+}
+
+void BottomStrip::setArea (juce::Rectangle<int> area)
+{
+    const float scale = juce::jmin ((float) area.getWidth() / (float) kWidth, (float) area.getHeight() / (float) kBoxHeight);
+    const auto boxes = juce::Rectangle<float> ((float) kWidth * scale, (float) kBoxHeight * scale).withCentre (area.toFloat().getCentre());
+    const auto native = juce::Rectangle<int> (kWidth, kBoxHeight).expanded (kMargin);
+
+    if (scale == 1.0f && boxes.getTopLeft() == boxes.getTopLeft().toInt().toFloat())
+    {
+        setTransform ({});
+        setBounds (native + boxes.getTopLeft().toInt());
+    }
+    else
+    {
+        setBounds (native);
+        setTransform (juce::AffineTransform::scale (scale).translated (boxes.getX(), boxes.getY()));
+    }
+}
+
+int BottomStrip::heightForWidth (int width)
+{
+    return juce::roundToInt ((float) width * (float) kBoxHeight / (float) kWidth);
 }
 
 void BottomStrip::timerCallback()
@@ -155,15 +179,13 @@ void BottomStrip::updateMeters()
 void BottomStrip::paint (juce::Graphics& g)
 {
     const int x0 = kMargin, y0 = kMargin;
-    const int corW = getWidth() - 2 * kMargin - kCorX;
-    for (auto [x, w] : { std::pair<int, int> { kOutX, kOutW }, { kSetX, kSetW }, { kCorX, corW } })
+    for (auto [x, w] : { std::pair<int, int> { kOutX, kOutW }, { kSetX, kSetW }, { kCorX, kCorW } })
         ui::drawInsetPanel (g, juce::Rectangle<float> ((float) (x0 + x), (float) y0, (float) w, (float) kBoxHeight));
 }
 
 void BottomStrip::resized()
 {
     const int x0 = kMargin, y0 = kMargin;
-    const int corW = getWidth() - 2 * kMargin - kCorX;
     const int scy = y0 + kBoxHeight / 2;
 
     bypass.setBounds   (x0 + kSdBypass, scy - 9, 18, 18);
@@ -175,6 +197,6 @@ void BottomStrip::resized()
     sizeBox.setBounds  (x0 + kSdSize, scy - 8, 42, 17);
 
     correlation.setBounds (x0 + kCorX + 7, y0, kSdMeterW, kBoxHeight);
-    scopeButton.setBounds (x0 + kCorX + corW - 26, scy - 9, 18, 18);
+    scopeButton.setBounds (x0 + kCorX + kCorW - 26, scy - 9, 18, 18);
 }
 }

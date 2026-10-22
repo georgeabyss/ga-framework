@@ -47,11 +47,14 @@ namespace ga::ui
     // small caps name under a control; (cx, cy) is the centre of the control
     void drawName (juce::Graphics&, float cx, float cy, const juce::String& name);
 
-    // plug-in title top left: big purple title with a unison echo, small grey subtitle below
-    void drawTitle (juce::Graphics&, const juce::String& title, const juce::String& subtitle);
+    // plug-in title: big purple title with a unison echo, its text starting at x on the baseline,
+    // small grey subtitle below
+    void drawTitle (juce::Graphics&, const juce::String& title, const juce::String& subtitle, float x, float baseline);
+    float titleWidth (const juce::String& title);   // of the title's letters, without the echo
 
     // the silver gothic GA, its right edge at x = right and its top at y = top
     void drawLogo (juce::Graphics&, float right, float top);
+    juce::Rectangle<float> logoSize();   // its width and height
 }
 
 namespace ga

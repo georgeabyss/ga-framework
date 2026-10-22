@@ -9,7 +9,8 @@ namespace ga
 //   output:   Bypass, Dry/Wet, Bass Mono
 //   settings: oversampling, anti-alias filter, window size
 //   phase:    correlation meter, Phase Protect, goniometer button
-// The output and settings boxes have fixed widths; the phase box takes the rest.
+// Laid out at a fixed native size (kWidth x kBoxHeight) and scaled as one piece: the plug-in gives it
+// an area with setArea(), and it fills it as far as its proportions allow, centred.
 class BottomStrip : public juce::Component, private juce::Timer
 {
 public:
@@ -25,8 +26,12 @@ public:
         juce::String oversamplingTooltip;                     // the current latency is added at the end
     };
 
-    static constexpr int kMargin = 4;   // empty space around the boxes, so their edges are never clipped
-    static constexpr int kBoxHeight = 28;
+    static constexpr int kWidth = 750, kBoxHeight = 28;   // native size of the three boxes
+
+    // Place the strip: the outer edges of its boxes fill the area, as far as the proportions allow,
+    // centred. Use this, not setBounds(): the strip reaches a little beyond its boxes.
+    void setArea (juce::Rectangle<int> area);
+    static int heightForWidth (int width);   // the area height that fits a given width exactly
 
     BottomStrip (juce::AudioProcessorValueTreeState&, Host);
     ~BottomStrip() override;
@@ -45,6 +50,8 @@ private:
     void updateDimming();            // the output controls are dimmed while the effect is bypassed
     void updateOutputControls();     // Bypass (not clickable at Dry/Wet 0), locks, Phase Protect
     void updateMeters();             // correlation and goniometer from the processor's output
+
+    static constexpr int kMargin = 4;   // empty space around the boxes, so their edges are never clipped
 
     Host host;
     std::atomic<float>* dryWetValue;
