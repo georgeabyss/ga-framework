@@ -20,36 +20,37 @@ void CorrelationMeter::setTarget (float correlation, bool hasSignal)
 void CorrelationMeter::paint (juce::Graphics& g)
 {
     // CORRELATION  -1 [=====|==   ] +1  +0.82
+    const auto& t = themeOf (*this);
     const float cy = (float) getHeight() * 0.5f;
-    g.setFont (ui::font (6.5f, false, 0.15f));
-    g.setColour (ui::labelGrey);
+    g.setFont (t.font (t.type.label));
+    g.setColour (t.colours.label);
     g.drawText ("CORRELATION", juce::Rectangle<float> (4.0f, cy - 5.0f, 60.0f, 10.0f), juce::Justification::centredLeft, false);
 
     // the bar takes what is left between the label and the value
     const auto bar = juce::Rectangle<float> (72.0f, cy - 4.5f, (float) getWidth() - 72.0f - 52.0f, 9.0f);
-    g.setFont (ui::font (6.0f));
-    g.setColour (juce::Colour (0xff5d6068));
+    g.setFont (t.font (t.type.scale));
+    g.setColour (t.colours.markDim);
     g.drawText ("-1", juce::Rectangle<float> (bar.getX() - 12.0f, cy - 5.0f, 10.0f, 10.0f), juce::Justification::centredRight, false);
     g.drawText ("+1", juce::Rectangle<float> (bar.getRight() + 3.0f, cy - 5.0f, 12.0f, 10.0f), juce::Justification::centredLeft, false);
-    ui::drawRecess (g, bar);
+    ui::drawRecess (g, t, bar);
 
     const auto in = bar.reduced (1.5f);
     const float cx = in.getCentreX(), half = in.getWidth() * 0.5f;
-    g.setColour (juce::Colour (0xff34373c));
-    for (float t : { -0.5f, 0.0f, 0.5f })
-        g.drawVerticalLine (juce::roundToInt (cx + t * half), in.getY(), in.getBottom());
+    g.setColour (t.colours.recessEdge);
+    for (float tick : { -0.5f, 0.0f, 0.5f })
+        g.drawVerticalLine (juce::roundToInt (cx + tick * half), in.getY(), in.getBottom());
 
     {
         const float x = cx + shown * half;
-        const auto col = (shown < 0.0f ? ui::warn : ui::purple).withMultipliedAlpha (idle ? 0.5f : 1.0f);
+        const auto col = (shown < 0.0f ? t.colours.negative : t.colours.accent).withMultipliedAlpha (idle ? 0.5f : 1.0f);
         g.setColour (col.withMultipliedAlpha (0.45f));
         g.fillRect (juce::Rectangle<float>::leftTopRightBottom (juce::jmin (cx, x), in.getY(), juce::jmax (cx, x), in.getBottom()));
         g.setColour (col);
         g.fillRect (juce::Rectangle<float> (2.0f, in.getHeight() + 2.0f).withCentre ({ x, in.getCentreY() }));
     }
 
-    g.setFont (ui::monoFont (8.5f));
-    g.setColour (idle ? juce::Colour (0xff5d6068) : juce::Colour (0xffe4e6ea));
+    g.setFont (t.font (t.type.value));
+    g.setColour (idle ? t.colours.markDim : t.colours.value);
     g.drawText ((shown >= 0.0f ? "+" : "") + juce::String (shown, 2),
                 juce::Rectangle<float> (bar.getRight() + 18.0f, cy - 6.0f, 34.0f, 12.0f), juce::Justification::centredLeft, false);
 }
@@ -82,7 +83,7 @@ void Goniometer::push (const float* l, const float* r, int n)
         tg.addTransform (juce::AffineTransform::scale (2.0f));
         const float cx = (float) getWidth() * 0.5f, cy = (float) getHeight() * 0.5f;
         const float R = (float) juce::jmin (getWidth(), getHeight()) * 0.5f - 10.0f;
-        tg.setColour (ui::purpleHi.withAlpha (0.55f));
+        tg.setColour (themeOf (*this).colours.accentHi.withAlpha (0.55f));
         const int stride = juce::jmax (1, n / 3000);
         for (int i = 0; i < n; i += stride)
         {
@@ -96,6 +97,7 @@ void Goniometer::push (const float* l, const float* r, int n)
 
 void Goniometer::paint (juce::Graphics& g)
 {
+    const auto& t = themeOf (*this);
     const auto b = getLocalBounds().toFloat();
     const auto c = b.getCentre();
     const float R = juce::jmin (b.getWidth(), b.getHeight()) * 0.5f - 10.0f;
@@ -106,16 +108,16 @@ void Goniometer::paint (juce::Graphics& g)
     diamond.lineTo (c.x, c.y + R);
     diamond.lineTo (c.x - R, c.y);
     diamond.closeSubPath();
-    g.setColour (juce::Colour (0xff2a2c31));
+    g.setColour (t.colours.track);
     g.strokePath (diamond, juce::PathStrokeType (1.0f));
-    g.setColour (juce::Colour (0xff1f2125));
+    g.setColour (t.colours.grid);
     g.drawLine (c.x, c.y - R, c.x, c.y + R, 1.0f);                                  // M
     g.drawLine (c.x - R, c.y, c.x + R, c.y, 1.0f);                                  // S
     g.drawLine (c.x - R * 0.5f, c.y - R * 0.5f, c.x + R * 0.5f, c.y + R * 0.5f, 1.0f);   // L
     g.drawLine (c.x + R * 0.5f, c.y - R * 0.5f, c.x - R * 0.5f, c.y + R * 0.5f, 1.0f);   // R
 
-    g.setFont (ui::font (6.5f, true, 0.12f));
-    g.setColour (ui::labelGrey);
+    g.setFont (t.font (t.type.scopeAxis));
+    g.setColour (t.colours.label);
     g.drawText ("M", juce::Rectangle<float> (12.0f, 9.0f).withCentre ({ c.x, c.y - R - 5.0f }), juce::Justification::centred, false);
     g.drawText ("L", juce::Rectangle<float> (12.0f, 9.0f).withCentre ({ c.x - R * 0.62f, c.y - R * 0.62f }), juce::Justification::centred, false);
     g.drawText ("R", juce::Rectangle<float> (12.0f, 9.0f).withCentre ({ c.x + R * 0.62f, c.y - R * 0.62f }), juce::Justification::centred, false);

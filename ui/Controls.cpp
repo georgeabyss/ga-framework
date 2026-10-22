@@ -84,49 +84,50 @@ juce::String Knob::valueString() const
 
 void Knob::paint (juce::Graphics& g)
 {
+    const auto& t = themeOf (*this);
     const bool hot = isMouseOverOrDragging();
-    const auto valueColour = dragging ? juce::Colours::white : juce::Colour (0xffe4e6ea);
+    const auto valueColour = dragging ? t.colours.valueActive : t.colours.value;
 
     if (style == Style::mini)
     {
         const float cy = (float) getHeight() * 0.5f;
-        ui::drawMiniKnob (g, { 12.0f, cy }, proportion(), hot);
+        ui::drawMiniKnob (g, t, { 12.0f, cy }, proportion(), hot);
 
         // the name; with a lock it is the lock switch: lavender with a padlock while locked,
         // brighter with a faint open padlock while hovered
         const auto name = nameArea();
-        const auto lockColour = juce::Colour (0xffb9a6e6);
-        g.setColour (locked ? lockColour : overName ? juce::Colour (0xffc9cbd1) : ui::labelGrey);
-        g.setFont (ui::font (6.5f, false, 0.15f));
+        g.setColour (locked ? t.colours.locked : overName ? t.colours.labelHover : t.colours.label);
+        g.setFont (t.font (t.type.label));
         g.drawText (nameText.toUpperCase(), name, juce::Justification::centredLeft, false);
         if (locked || overName)
             ui::drawPadlock (g, name.getRight() + 2.5f, name.getY() + 1.5f, ! locked,
-                             locked ? ui::purple : ui::purple.withAlpha (0.4f));
+                             locked ? t.colours.accent : t.colours.accent.withAlpha (0.4f));
         if (valueEditor == nullptr)
         {
             g.setColour (valueColour);
-            g.setFont (ui::monoFont (8.5f));
+            g.setFont (t.font (t.type.value));
             g.drawText (valueString(), juce::Rectangle<float> (26.0f, cy - 0.5f, (float) getWidth() - 26.0f, 11.0f),
                         juce::Justification::centredLeft, false);
         }
         return;
     }
 
-    ui::drawKnob (g, { 28.0f, 22.0f }, proportion(), hot);
+    ui::drawKnob (g, t, { 28.0f, 22.0f }, proportion(), hot);
     if (valueEditor == nullptr)
     {
         g.setColour (valueColour);
-        g.setFont (ui::monoFont (8.5f));
+        g.setFont (t.font (t.type.value));
         g.drawText (valueString(), juce::Rectangle<float> (56.0f, 12.0f).withCentre ({ 28.0f, 22.0f + 31.0f - 4.0f }),
                     juce::Justification::centred, false);
     }
-    ui::drawName (g, 28.0f, 22.0f, nameText);
+    ui::drawName (g, t, 28.0f, 22.0f, nameText);
 }
 
 juce::Rectangle<float> Knob::nameArea() const
 {
     const float cy = (float) getHeight() * 0.5f;
-    const float w = juce::GlyphArrangement::getStringWidth (ui::font (6.5f, false, 0.15f), nameText.toUpperCase());
+    const auto& t = themeOf (*this);
+    const float w = juce::GlyphArrangement::getStringWidth (t.font (t.type.label), nameText.toUpperCase());
     return { 26.0f, cy - 10.0f, std::ceil (w) + 1.0f, 9.0f };
 }
 
@@ -230,16 +231,17 @@ void Knob::showMenu()
 
 void Knob::showValueEditor()
 {
+    const auto& t = themeOf (*this);
     valueEditor = std::make_unique<juce::TextEditor>();
     auto& ed = *valueEditor;
     ed.setJustification (juce::Justification::centred);
-    ed.setFont (ui::monoFont (9.0f));
-    ed.setColour (juce::TextEditor::backgroundColourId, juce::Colour (0xff08090a));
-    ed.setColour (juce::TextEditor::textColourId, ui::text);
-    ed.setColour (juce::TextEditor::highlightColourId, ui::purple.withAlpha (0.45f));
-    ed.setColour (juce::TextEditor::outlineColourId, ui::purple.withAlpha (0.6f));
-    ed.setColour (juce::TextEditor::focusedOutlineColourId, ui::purple);
-    ed.setColour (juce::CaretComponent::caretColourId, ui::purpleHi);
+    ed.setFont (t.font (t.type.valueEdit));
+    ed.setColour (juce::TextEditor::backgroundColourId, t.colours.recessTop);
+    ed.setColour (juce::TextEditor::textColourId, t.colours.text);
+    ed.setColour (juce::TextEditor::highlightColourId, t.colours.accent.withAlpha (0.45f));
+    ed.setColour (juce::TextEditor::outlineColourId, t.colours.accent.withAlpha (0.6f));
+    ed.setColour (juce::TextEditor::focusedOutlineColourId, t.colours.accent);
+    ed.setColour (juce::CaretComponent::caretColourId, t.colours.accentHi);
     ed.setIndents (2, 1);
     ed.setText (param.getText (proportion(), 32), false);
     if (style == Style::mini)
@@ -324,24 +326,25 @@ void StepBox::step (int delta)
 
 void StepBox::paint (juce::Graphics& g)
 {
+    const auto& t = themeOf (*this);
     const auto r = boxRect();
     const auto c = r.getCentre();
-    ui::drawRecess (g, r);
+    ui::drawRecess (g, t, r);
     if (isMouseOverOrDragging() && hoverArrow == 0)
     {
-        ui::drawHoverWash (g, r);
+        ui::drawHoverWash (g, t, r);
     }
 
-    g.setColour (juce::Colour (0xfff1f2f5));
+    g.setColour (t.colours.boxText);
     if (names)
     {
-        g.setFont (ui::monoFont (7.0f, true));
+        g.setFont (t.font (t.type.boxText));
         g.drawText (valueText (value).toUpperCase(),
                     r.withTrimmedRight (11.0f).withTrimmedLeft (2.0f), juce::Justification::centred, false);
     }
     else
     {
-        g.setFont (ui::monoFont (11.5f, true));
+        g.setFont (t.font (t.type.boxNumber));
         g.drawText (juce::String (value), juce::Rectangle<float> (14.0f, 14.0f).withCentre ({ c.x - 3.0f, c.y }),
                     juce::Justification::centred, false);
     }
@@ -350,15 +353,15 @@ void StepBox::paint (juce::Graphics& g)
     const float ay = c.y;
     if (! arrows)   // drop-down mark
     {
-        ui::drawDropDownMark (g, ax, ay, isMouseOver() ? ui::purpleHi : juce::Colour (0xff9a9da6));
+        ui::drawDropDownMark (g, ax, ay, isMouseOver() ? t.colours.accentHi : t.colours.mark);
         return;
     }
     juce::Path up, down;
     up.addTriangle (ax - 2.4f, ay - 1.2f, ax, ay - 4.0f, ax + 2.4f, ay - 1.2f);
     down.addTriangle (ax - 2.4f, ay + 1.2f, ax, ay + 4.0f, ax + 2.4f, ay + 1.2f);
-    g.setColour (hoverArrow == 1 ? ui::purpleHi : juce::Colour (0xff9a9da6));
+    g.setColour (hoverArrow == 1 ? t.colours.accentHi : t.colours.mark);
     g.fillPath (up);
-    g.setColour (hoverArrow == -1 ? ui::purpleHi : juce::Colour (0xff9a9da6));
+    g.setColour (hoverArrow == -1 ? t.colours.accentHi : t.colours.mark);
     g.fillPath (down);
 }
 
@@ -462,27 +465,31 @@ void StepBox::showMenu (bool valuesOnly)
 //==============================================================================
 bool LampButton::hitTest (int x, int y)
 {
-    return juce::Rectangle<int> (12, 12).withCentre (getLocalBounds().getCentre()).contains (x, y);
+    const int size = juce::roundToInt (themeOf (*this).sizes.lampSize);
+    return juce::Rectangle<int> (size, size).withCentre (getLocalBounds().getCentre()).contains (x, y);
 }
 
 void LampButton::paintButton (juce::Graphics& g, bool, bool)
 {
+    const auto& t = themeOf (*this);
     const bool on = getToggleState();
     const auto c = getLocalBounds().toFloat().getCentre();
+    const float size = t.sizes.lampSize;
 
     // thin dark holder, then the milky lens (glow stays inside)
-    const auto holder = juce::Rectangle<float> (14.4f, 14.4f).withCentre (c);
-    g.setColour (juce::Colour (0xff050506));
+    const auto holderSize = (float) (size * 1.2);   // in double, so the default stays exactly 14.4
+    const auto holder = juce::Rectangle<float> (holderSize, holderSize).withCentre (c);
+    g.setColour (t.colours.hole);
     g.fillRoundedRectangle (holder, 1.2f);
     g.setColour (juce::Colours::black);
     g.drawRoundedRectangle (holder, 1.2f, 1.0f);
 
-    const auto lens = juce::Rectangle<float> (12.0f, 12.0f).withCentre (c);
+    const auto lens = juce::Rectangle<float> (size, size).withCentre (c);
     {
         const auto centre = juce::Point<float> (c.x, c.y - 0.6f);
-        juce::ColourGradient grad (on ? juce::Colour (0xffe6d8ff) : juce::Colour (0xff3a3148), centre.x, centre.y,
-                                   on ? juce::Colour (0xff8559e0) : juce::Colour (0xff251f30), centre.x + 7.8f, centre.y, true);
-        if (on) grad.addColour (0.55, juce::Colour (0xffb18cfe));
+        juce::ColourGradient grad (on ? t.colours.lampLit : t.colours.lensOff, centre.x, centre.y,
+                                   on ? t.colours.lampLitEdge : t.colours.lampOffEdge, centre.x + (float) (size * 0.65), centre.y, true);
+        if (on) grad.addColour (0.55, t.colours.accent);
         g.setGradientFill (grad);
         g.fillRoundedRectangle (lens, 0.8f);
     }
@@ -508,22 +515,23 @@ void LampButton::paintButton (juce::Graphics& g, bool, bool)
 //==============================================================================
 void SquareToggle::paintButton (juce::Graphics& g, bool over, bool)
 {
+    const auto& t = themeOf (*this);
     const bool lit = invert ? ! getToggleState() : getToggleState();
     const auto c = getLocalBounds().toFloat().getCentre();
     const float size = (float) juce::jmin (getWidth(), getHeight()) - 2.0f;
-    ui::drawRecess (g, c, size);
+    ui::drawRecess (g, t, c, size);
 
     if (over)
     {
-        ui::drawHoverWash (g, juce::Rectangle<float> (size, size).withCentre (c));
+        ui::drawHoverWash (g, t, juce::Rectangle<float> (size, size).withCentre (c));
     }
 
-    const auto col = lit ? ui::purple : juce::Colour (0xff5d6068);
+    const auto col = lit ? t.colours.accent : t.colours.markDim;
 
     if (lit)
     {
         const float gr = size * 0.4f;
-        g.setGradientFill (juce::ColourGradient (ui::purple.withAlpha (0.28f), c.x, c.y, ui::purple.withAlpha (0.0f), c.x + gr, c.y, true));
+        g.setGradientFill (juce::ColourGradient (t.colours.accent.withAlpha (0.28f), c.x, c.y, t.colours.accent.withAlpha (0.0f), c.x + gr, c.y, true));
         g.fillEllipse (c.x - gr, c.y - gr, gr * 2.0f, gr * 2.0f);
     }
 
@@ -554,11 +562,12 @@ void SquareToggle::paintButton (juce::Graphics& g, bool over, bool)
 //==============================================================================
 void SectionLed::paintButton (juce::Graphics& g, bool isOver, bool)
 {
+    const auto& t = themeOf (*this);
     const auto c = getLocalBounds().toFloat().getCentre();
-    ui::drawLed (g, c, lit);
+    ui::drawLed (g, t, c, lit);
     if (isOver)
     {
-        g.setColour (ui::purpleHi.withAlpha (0.45f));
+        g.setColour (t.colours.accentHi.withAlpha (0.45f));
         g.drawEllipse (c.x - 4.5f, c.y - 4.5f, 9.0f, 9.0f, 1.0f);
     }
 }
@@ -567,31 +576,33 @@ void SectionLed::paintButton (juce::Graphics& g, bool isOver, bool)
 void LedToggle::paintButton (juce::Graphics& g, bool isOver, bool)
 {
     // the label, then the LED right after it
+    const auto& t = themeOf (*this);
     const float cy = (float) getHeight() * 0.5f;
-    const auto font = ui::font (6.5f, false, 0.15f);
+    const auto font = t.font (t.type.label);
     const auto text = getButtonText().toUpperCase();
     const float textW = juce::GlyphArrangement::getStringWidth (font, text);
-    g.setColour (isOver ? juce::Colour (0xffc9cbd1) : ui::labelGrey);
+    g.setColour (isOver ? t.colours.labelHover : t.colours.label);
     g.setFont (font);
     g.drawText (text, juce::Rectangle<float> (2.0f, cy - 5.0f, textW + 2.0f, 10.0f), juce::Justification::centredLeft, false);
-    ui::drawLed (g, { 2.0f + textW + 8.0f, cy }, getToggleState(), alarm);
+    ui::drawLed (g, t, { 2.0f + textW + 8.0f, cy }, getToggleState(), alarm);
 }
 
 //==============================================================================
 void MenuBox::paint (juce::Graphics& g)
 {
+    const auto& t = themeOf (*this);
     const auto r = getLocalBounds().toFloat().reduced (1.0f);
-    ui::drawRecess (g, r);
+    ui::drawRecess (g, t, r);
     if (isMouseOver())
     {
-        ui::drawHoverWash (g, r);
+        ui::drawHoverWash (g, t, r);
     }
-    g.setFont (ui::monoFont (7.0f, true));
-    g.setColour (juce::Colour (0xfff1f2f5));
+    g.setFont (t.font (t.type.boxText));
+    g.setColour (t.colours.boxText);
     g.drawText (getText != nullptr ? getText().toUpperCase() : juce::String(), r.withTrimmedRight (9.0f),
                 juce::Justification::centred, false);
 
-    ui::drawDropDownMark (g, r.getRight() - 6.0f, r.getCentreY(), juce::Colour (0xff9a9da6));
+    ui::drawDropDownMark (g, r.getRight() - 6.0f, r.getCentreY(), t.colours.mark);
 }
 
 void MenuBox::mouseDown (const juce::MouseEvent&)

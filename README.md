@@ -47,7 +47,8 @@ Compiled into every plug-in by `ga_add_plugin()`; include as `#include "ui/Contr
 
 | File | |
 | --- | --- |
-| `ui/Style.h` | `ga::ui`: colours, fonts, drawing (recess, inset panel, knob faces, LED, padlock, screw), `drawTitle()`, `drawLogo()`; `ga::LookAndFeel` for menus, tooltips and dialogs |
+| `ui/Theme.h` | `ga::Theme`: every colour, text style and size the framework draws with; the defaults are the GA look. `Theme::withAccent()` derives the highlight and dark shades from one colour; override any of them afterwards. `ga::themeOf (component)` finds the editor's theme |
+| `ui/Style.h` | `ga::ui`: drawing in a theme's colours (recess, inset panel, knob faces, LED, padlock, screw), `drawTitle()`, `drawLogo()`; `ga::LookAndFeel` holds the theme and draws menus, tooltips and dialogs in it |
 | `ui/Controls.h` | `ga::Knob` (regular and mini, lockable), `StepBox`, `LampButton`, `SquareToggle`, `SectionLed`, `LedToggle`, `MenuBox` |
 | `ui/Meters.h` | `ga::CorrelationMeter`, `ga::Goniometer` |
 | `ui/BottomStrip.h` | `ga::BottomStrip`: Bypass, Dry/Wet, Bass Mono \| oversampling, filter, window size \| correlation, Phase Protect, goniometer button. Asks the plug-in through a small `Host` struct of callbacks. Native size 750 × 28, scaled as one piece: `setArea()` fills the area as far as its proportions allow, centred |
@@ -58,7 +59,7 @@ Compiled into every plug-in by `ga_add_plugin()`; include as `#include "ui/Contr
 class MyEditor : public ga::EditorShell
 {
 public:
-    MyEditor (MyProcessor& p) : ga::EditorShell (p, p.apvts, stripHost (p)), panel (p) { setPanel (panel, 802, 192, 26, 8); }
+    MyEditor (MyProcessor& p) : ga::EditorShell (p, p.apvts, stripHost (p), myTheme()), panel (p) { setPanel (panel, 802, 192, 26, 8); }
 private:
     MyPanel panel;   // a ga::Panel, transparent: the header, the plug-in's own sections and the bottom strip
 };

@@ -9,8 +9,8 @@ namespace
     constexpr float kMinScale = 0.6f, kMaxScale = 2.5f;   // dragging the corner
 }
 
-EditorShell::EditorShell (juce::AudioProcessor& p, juce::AudioProcessorValueTreeState& s, BottomStrip::Host host)
-    : AudioProcessorEditor (&p), state (s), strip (s, std::move (host))
+EditorShell::EditorShell (juce::AudioProcessor& p, juce::AudioProcessorValueTreeState& s, BottomStrip::Host host, Theme theme)
+    : AudioProcessorEditor (&p), state (s), laf (std::move (theme)), strip (s, std::move (host))
 {
     setLookAndFeel (&laf);
 
@@ -44,6 +44,7 @@ void EditorShell::setPanel (Panel& p, int w, int h, int mx, int my)
     baseWidth = w;
     baseHeight = h;
     marginX = mx;
+    addAndMakeVisible (faceplate);   // first, so the panel already sees the theme while it lays out
 
     const bool open = (bool) state.state.getProperty (prop::scopeOpen, false);   // saved with the session
     strip.setScopeOpen (open);
@@ -55,7 +56,6 @@ void EditorShell::setPanel (Panel& p, int w, int h, int mx, int my)
     p.layout (juce::Rectangle<int> (w, h).reduced (mx, my), strip);
     p.setBounds (0, 0, w, h);
     goniometer.setBounds (scopeBox().reduced (6));
-    addAndMakeVisible (faceplate);
 
     setConstrainer (&constrainer);
     updateConstraints();
@@ -114,12 +114,13 @@ void EditorShell::resized()
 
 void EditorShell::Faceplate::paint (juce::Graphics& g)
 {
+    const auto& t = shell.laf.theme;
     const float W = (float) getWidth(), H = (float) getHeight();
 
     // one long faceplate
-    g.setGradientFill (juce::ColourGradient (juce::Colour (0xff1a1b1e), 0.0f, 0.0f, juce::Colour (0xff0d0e10), 0.0f, H, false));
+    g.setGradientFill (juce::ColourGradient (t.colours.faceplateTop, 0.0f, 0.0f, t.colours.faceplateBottom, 0.0f, H, false));
     g.fillAll();
-    g.setColour (juce::Colour (0xff4a4d54).withAlpha (0.7f));
+    g.setColour (t.colours.faceplateEdge.withAlpha (0.7f));
     g.drawLine (0.0f, 1.5f, W, 1.5f, 1.0f);
     g.setColour (juce::Colours::black.withAlpha (0.8f));
     g.drawLine (0.0f, H - 1.5f, W, H - 1.5f, 1.0f);
@@ -127,15 +128,15 @@ void EditorShell::Faceplate::paint (juce::Graphics& g)
     if (shell.goniometer.isVisible())
     {
         const auto box = shell.scopeBox();
-        ui::drawInsetPanel (g, box.toFloat());
-        g.setFont (ui::font (6.5f, true, 0.14f));
-        g.setColour (ui::labelGrey);
+        ui::drawInsetPanel (g, t, box.toFloat());
+        g.setFont (t.font (t.type.panelTitle));
+        g.setColour (t.colours.label);
         g.drawText ("GONIOMETER", box.getX() + 8, box.getY() + 6, 80, 9, juce::Justification::centredLeft, false);
     }
 
-    // rack screws
-    for (float x : { 12.0f, W - 12.0f })
-        for (float y : { 22.0f, H - 22.0f })
-            ui::drawScrew (g, x, y);
+    // rack screws, from the corners
+    for (float x : { t.sizes.screwInsetX, W - t.sizes.screwInsetX })
+        for (float y : { t.sizes.screwInsetY, H - t.sizes.screwInsetY })
+            ui::drawScrew (g, t, x, y);
 }
 }

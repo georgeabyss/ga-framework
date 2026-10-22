@@ -27,7 +27,7 @@ public:
 class EditorShell : public juce::AudioProcessorEditor
 {
 public:
-    EditorShell (juce::AudioProcessor&, juce::AudioProcessorValueTreeState&, BottomStrip::Host);
+    EditorShell (juce::AudioProcessor&, juce::AudioProcessorValueTreeState&, BottomStrip::Host, Theme = {});
     ~EditorShell() override;
 
     void resized() override;

@@ -22,12 +22,12 @@ public:
 
     void paint (juce::Graphics&) override;
     void resized() override;
+    void parentHierarchyChanged() override { resized(); }   // the theme may have changed
 
     PresetBar presetBar;
 
 private:
     static constexpr int kBleed = 16;           // room for the echo and the shadows around the row
-    static constexpr float kTitleBaseline = 17.0f;   // from the top of the row
 
     juce::String title, subtitle;
     int presetHeight = PresetBar::kHeight, presetOffset = 0;

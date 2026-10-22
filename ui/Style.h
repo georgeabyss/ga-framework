@@ -1,18 +1,12 @@
 #pragma once
 
-#include <juce_gui_basics/juce_gui_basics.h>
+#include "Theme.h"
 
-// Colours, fonts and the drawing primitives every part of a GA faceplate shares.
+// The drawing primitives every part of a GA faceplate shares, in the colours, type and sizes of a
+// ga::Theme.
 namespace ga::ui
 {
-    inline const juce::Colour purple    { 0xffb18cfe };
-    inline const juce::Colour purpleHi  { 0xffd9c7ff };
-    inline const juce::Colour text      { 0xfff0f1f3 };
-    inline const juce::Colour labelGrey { 0xff8f9299 };
-    inline const juce::Colour warn      { 0xffff7a8a };   // negative correlation
-
-    constexpr float kDimAlpha = 0.45f;           // controls of a section (or effect) that is off
-
+    // plain fonts, for a plug-in's own drawing; the framework draws with Theme::font()
     juce::Font font (float size, bool bold = false, float kerning = 0.0f);
     juce::Font monoFont (float size, bool bold = false);
 
@@ -20,54 +14,58 @@ namespace ga::ui
     juce::Point<float> polar (juce::Point<float> c, float r, float angle);
 
     // recessed dark box (step boxes, toggles, meters)
-    void drawRecess (juce::Graphics&, juce::Rectangle<float>);
-    void drawRecess (juce::Graphics&, juce::Point<float> centre, float size);
+    void drawRecess (juce::Graphics&, const Theme&, juce::Rectangle<float>);
+    void drawRecess (juce::Graphics&, const Theme&, juce::Point<float> centre, float size);
 
-    // darker inset panel with a faint lavender edge (bottom strip, correlation box, goniometer)
-    void drawInsetPanel (juce::Graphics&, juce::Rectangle<float>);
+    // darker inset panel with a faint accent edge (bottom strip, correlation box, goniometer)
+    void drawInsetPanel (juce::Graphics&, const Theme&, juce::Rectangle<float>);
 
-    void drawHoverWash (juce::Graphics&, juce::Rectangle<float>);
+    void drawHoverWash (juce::Graphics&, const Theme&, juce::Rectangle<float>);
     void drawDropDownMark (juce::Graphics&, float x, float y, juce::Colour);
 
     // knob faces; pos is 0..1, hot = hovered or dragged
-    void drawKnob (juce::Graphics&, juce::Point<float> centre, float pos, bool hot);
-    void drawMiniKnob (juce::Graphics&, juce::Point<float> centre, float pos, bool hot);
+    void drawKnob (juce::Graphics&, const Theme&, juce::Point<float> centre, float pos, bool hot);
+    void drawMiniKnob (juce::Graphics&, const Theme&, juce::Point<float> centre, float pos, bool hot);
 
-    // round LED; alarm 0..1 turns a lit LED from lavender to orange
-    void drawLed (juce::Graphics&, juce::Point<float> centre, bool on, float alarm = 0.0f);
+    // round LED; alarm 0..1 turns a lit LED from the accent to the alarm colour
+    void drawLed (juce::Graphics&, const Theme&, juce::Point<float> centre, bool on, float alarm = 0.0f);
 
     // small padlock, 5 x 6, top left at (x, y); open = shackle lifted
     void drawPadlock (juce::Graphics&, float x, float y, bool open, juce::Colour);
 
-    void drawScrew (juce::Graphics&, float cx, float cy);
+    void drawScrew (juce::Graphics&, const Theme&, float cx, float cy);
 
     // Gothic "GA", drawn with a flat pen held at an angle (own letterforms, no font needed)
     juce::Path makeGothicGA (float scale, float nib, float angleDeg);
 
     // small caps name under a control; (cx, cy) is the centre of the control
-    void drawName (juce::Graphics&, float cx, float cy, const juce::String& name);
+    void drawName (juce::Graphics&, const Theme&, float cx, float cy, const juce::String& name);
 
-    // plug-in title: big purple title with a unison echo, its text starting at x on the baseline,
-    // small grey subtitle below
-    void drawTitle (juce::Graphics&, const juce::String& title, const juce::String& subtitle, float x, float baseline);
-    float titleWidth (const juce::String& title);   // of the title's letters, without the echo
+    // plug-in title: big title in the accent with a unison echo, its text starting at x on the
+    // baseline, small grey subtitle below
+    void drawTitle (juce::Graphics&, const Theme&, const juce::String& title, const juce::String& subtitle, float x, float baseline);
+    float titleWidth (const Theme&, const juce::String& title);   // of the title's letters, without the echo
 
     // the silver gothic GA, its right edge at x = right and its top at y = top
-    void drawLogo (juce::Graphics&, float right, float top);
+    void drawLogo (juce::Graphics&, const Theme&, float right, float top);
     juce::Rectangle<float> logoSize();   // its width and height
 }
 
 namespace ga
 {
+// Menus, tooltips and dialogs in the theme's colours. The editor shell holds one, with the plug-in's
+// theme; every component finds the theme through it (ga::themeOf).
 class LookAndFeel : public juce::LookAndFeel_V4
 {
 public:
-    LookAndFeel();
+    explicit LookAndFeel (Theme = {});
 
-    // compact menus in the faceplate colours, lavender highlight
+    const Theme theme;
+
+    // compact menus in the faceplate colours, accent highlight
     juce::Font getPopupMenuFont() override;
     void drawPopupMenuBackground (juce::Graphics&, int width, int height) override;
     void drawPopupMenuSectionHeader (juce::Graphics&, const juce::Rectangle<int>&, const juce::String&) override;
-    void drawCornerResizer (juce::Graphics&, int w, int h, bool isMouseOver, bool isMouseDragging) override;   // purple
+    void drawCornerResizer (juce::Graphics&, int w, int h, bool isMouseOver, bool isMouseDragging) override;   // accent
 };
 }

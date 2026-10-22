@@ -47,6 +47,7 @@ private:
     juce::String text;          // what the display shows, e.g. "07 TWIN PEAKS"
     bool modified = false, menuOpen = false, muted = false, blinkOn = true;
     Zone hover = Zone::none;
-    juce::SharedResourcePointer<LookAndFeel> dialogLook;   // outlives any dialog that is still open
+    std::shared_ptr<LookAndFeel> dialogLook;   // in this editor's theme; outlives any dialog that is still open
+    LookAndFeel& dialogLookAndFeel();
 };
 }

@@ -108,7 +108,7 @@ void BottomStrip::updateDimming()
         return;
 
     for (auto* c : { (juce::Component*) &dryWet, (juce::Component*) &bassMono })
-        c->setAlpha (off ? ui::kDimAlpha : 1.0f);
+        c->setAlpha (off ? themeOf (*this).sizes.dimAlpha : 1.0f);
 
     allOff = off;
     dimmingKnown = true;
@@ -125,7 +125,7 @@ void BottomStrip::updateOutputControls()
         bypass.setEnabled (canBypass);
         bypass.setAlpha (canBypass ? 1.0f : 0.35f);
     }
-    phaseProtect.setAlpha (allOff ? ui::kDimAlpha : 1.0f);
+    phaseProtect.setAlpha (allOff ? themeOf (*this).sizes.dimAlpha : 1.0f);
     dryWet.setLocked (host.isLocked (pid::dryWet));
     bassMono.setLocked (host.isLocked (pid::bassMono));
 }
@@ -178,9 +178,10 @@ void BottomStrip::updateMeters()
 
 void BottomStrip::paint (juce::Graphics& g)
 {
+    const auto& t = themeOf (*this);
     const int x0 = kMargin, y0 = kMargin;
     for (auto [x, w] : { std::pair<int, int> { kOutX, kOutW }, { kSetX, kSetW }, { kCorX, kCorW } })
-        ui::drawInsetPanel (g, juce::Rectangle<float> ((float) (x0 + x), (float) y0, (float) w, (float) kBoxHeight));
+        ui::drawInsetPanel (g, t, juce::Rectangle<float> ((float) (x0 + x), (float) y0, (float) w, (float) kBoxHeight));
 }
 
 void BottomStrip::resized()

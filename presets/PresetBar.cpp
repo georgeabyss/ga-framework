@@ -140,26 +140,28 @@ void PresetBar::paint (juce::Graphics& g)
 
 void PresetBar::paintArrowButton (juce::Graphics& g, Zone z)
 {
+    const auto& t = themeOf (*this);
     const auto r = zoneRect (z);
-    ui::drawRecess (g, r);
+    ui::drawRecess (g, t, r);
     if (hover == z)
     {
-        g.setGradientFill (juce::ColourGradient (ui::purple.withAlpha (0.25f), r.getCentreX(), r.getCentreY(),
-                                                 ui::purple.withAlpha (0.0f), r.getCentreX() + r.getWidth() * 0.7f, r.getCentreY(), true));
+        g.setGradientFill (juce::ColourGradient (t.colours.accent.withAlpha (0.25f), r.getCentreX(), r.getCentreY(),
+                                                 t.colours.accent.withAlpha (0.0f), r.getCentreX() + r.getWidth() * 0.7f, r.getCentreY(), true));
         g.fillRect (r.reduced (1.0f));
     }
     const auto c = r.getCentre();
     const float d = z == Zone::prev ? -1.0f : 1.0f;   // pointing left or right
     juce::Path tri;
     tri.addTriangle (c.x + 2.0f * d, c.y, c.x - 2.0f * d, c.y - 3.0f, c.x - 2.0f * d, c.y + 3.0f);
-    g.setColour (hover == z ? ui::purpleHi : juce::Colour (0xff9a9da6));
+    g.setColour (hover == z ? t.colours.accentHi : t.colours.mark);
     g.fillPath (tri);
 }
 
 void PresetBar::paintDisplay (juce::Graphics& g, juce::Rectangle<float> r)
 {
     // dark glass
-    g.setGradientFill (juce::ColourGradient (juce::Colour (0xff07060a), 0.0f, r.getY(), juce::Colour (0xff120e17), 0.0f, r.getBottom(), false));
+    const auto& c = themeOf (*this).colours;
+    g.setGradientFill (juce::ColourGradient (c.displayTop, 0.0f, r.getY(), c.displayBottom, 0.0f, r.getBottom(), false));
     g.fillRect (r);
 
     // which cells are lit: "NN NAME" from the left with the star in the last slot, or the
@@ -197,24 +199,24 @@ void PresetBar::paintDisplay (juce::Graphics& g, juce::Rectangle<float> r)
         for (int col = 0; col < kCols; ++col)
             (lit[(size_t) (row * kCols + col)] ? on : off).addRectangle (x0 + (float) col * kPitch, y0 + (float) row * kPitch, kDot, kDot);
 
-    g.setColour (juce::Colour (0xff2a2232));
+    g.setColour (c.displayDotOff);
     g.fillPath (off);
 
     // glow: the lit dots blurred outwards in two soft passes, then the dots themselves
-    const auto glow = muted ? juce::Colour (0xffff6e32) : ui::purple;   // safety mute: orange-red
+    const auto glow = muted ? c.displayMuteGlow : c.accent;   // safety mute: orange-red
     for (auto pass : { std::pair<float, float> { 2.6f, 0.10f }, { 1.4f, 0.22f } })
     {
         g.setColour (glow.withAlpha (pass.second));
         g.strokePath (on, juce::PathStrokeType (pass.first, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
     }
-    g.setColour (muted ? juce::Colour (0xffffd2b0) : juce::Colour (0xfff1e9ff));
+    g.setColour (muted ? c.displayMuteDot : c.displayDotOn);
     g.fillPath (on);
 
     // reflection on the glass and the frame (lavender while the list is open)
     g.setGradientFill (juce::ColourGradient (juce::Colours::white.withAlpha (0.05f), 0.0f, r.getY(),
                                              juce::Colours::white.withAlpha (0.0f), 0.0f, r.getCentreY(), false));
     g.fillRect (r.withHeight (r.getHeight() * 0.45f));
-    g.setColour (muted ? juce::Colour (0xffff7832).withAlpha (0.8f) : menuOpen ? ui::purple.withAlpha (0.7f) : juce::Colours::black);
+    g.setColour (muted ? c.displayMuteEdge.withAlpha (0.8f) : menuOpen ? c.accent.withAlpha (0.7f) : juce::Colours::black);
     g.drawRect (r, 1.0f);
 }
 
@@ -334,10 +336,17 @@ void PresetBar::showMenu()
     });
 }
 
+LookAndFeel& PresetBar::dialogLookAndFeel()
+{
+    if (dialogLook == nullptr)
+        dialogLook = std::make_shared<LookAndFeel> (themeOf (*this));
+    return *dialogLook;
+}
+
 void PresetBar::askForName (const juce::String& title, const juce::String& initial, std::function<void (juce::String)> done)
 {
     auto* w = new juce::AlertWindow (title, {}, juce::MessageBoxIconType::NoIcon);
-    w->setLookAndFeel (&dialogLook.get());
+    w->setLookAndFeel (&dialogLookAndFeel());
     w->addTextEditor ("name", initial, "Name:");
     w->addButton ("OK", 1, juce::KeyPress (juce::KeyPress::returnKey));
     w->addButton ("Cancel", 0, juce::KeyPress (juce::KeyPress::escapeKey));
@@ -358,7 +367,7 @@ void PresetBar::askForName (const juce::String& title, const juce::String& initi
 void PresetBar::confirm (const juce::String& title, const juce::String& message, std::function<void()> done)
 {
     auto* w = new juce::AlertWindow (title, message, juce::MessageBoxIconType::NoIcon);
-    w->setLookAndFeel (&dialogLook.get());
+    w->setLookAndFeel (&dialogLookAndFeel());
     w->addButton ("Delete", 1);
     w->addButton ("Cancel", 0, juce::KeyPress (juce::KeyPress::escapeKey));
     w->enterModalState (true, juce::ModalCallbackFunction::create ([look = dialogLook, done = std::move (done), safe = juce::Component::SafePointer<PresetBar> (this)] (int result)
