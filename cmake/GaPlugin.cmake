@@ -8,9 +8,27 @@ get_filename_component(GA_FRAMEWORK_DIR "${CMAKE_CURRENT_LIST_DIR}/.." ABSOLUTE)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Path to your JUCE checkout. Override with: cmake -B build -DJUCE_DIR=/path/to/JUCE
-set(JUCE_DIR "$ENV{HOME}/Downloads/JUCE" CACHE PATH "Path to the JUCE folder")
-add_subdirectory(${JUCE_DIR} JUCE)
+# JUCE: next to the plug-in repo (../JUCE), otherwise -DJUCE_DIR=/path/to/JUCE. Every GA build uses
+# the version in cmake/juce-version.txt, locally and in CI: get it with
+#   git clone --depth 1 --branch <version> https://github.com/juce-framework/JUCE.git ../JUCE
+file(STRINGS "${CMAKE_CURRENT_LIST_DIR}/juce-version.txt" GA_JUCE_VERSION LIMIT_COUNT 1)
+get_filename_component(GA_JUCE_SIBLING "${CMAKE_SOURCE_DIR}/../JUCE" ABSOLUTE)
+set(JUCE_DIR "" CACHE PATH "Path to the JUCE folder, if it is not next to the plug-in repo")
+if(EXISTS "${GA_JUCE_SIBLING}/CMakeLists.txt")
+    set(GA_JUCE_PATH "${GA_JUCE_SIBLING}")
+elseif(EXISTS "${JUCE_DIR}/CMakeLists.txt")
+    set(GA_JUCE_PATH "${JUCE_DIR}")
+else()
+    message(FATAL_ERROR "JUCE ${GA_JUCE_VERSION} not found at ${GA_JUCE_SIBLING}. Get it with:\n"
+                        "  git clone --depth 1 --branch ${GA_JUCE_VERSION} https://github.com/juce-framework/JUCE.git ${GA_JUCE_SIBLING}\n"
+                        "or point at another checkout with -DJUCE_DIR=/path/to/JUCE")
+endif()
+file(STRINGS "${GA_JUCE_PATH}/CMakeLists.txt" GA_JUCE_PROJECT REGEX "^project\\(JUCE VERSION ")
+string(REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+" GA_JUCE_FOUND "${GA_JUCE_PROJECT}")
+if(NOT GA_JUCE_FOUND STREQUAL GA_JUCE_VERSION)
+    message(FATAL_ERROR "JUCE at ${GA_JUCE_PATH} is ${GA_JUCE_FOUND}; GA plug-ins are built with ${GA_JUCE_VERSION} (cmake/juce-version.txt)")
+endif()
+add_subdirectory(${GA_JUCE_PATH} JUCE)
 
 # ga_add_plugin(<target>
 #     PRODUCT_NAME <name>          shown in hosts

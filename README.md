@@ -11,7 +11,7 @@ step by step, each step proven by a bit-identical null test and unchanged screen
 cmake_minimum_required(VERSION 3.22)
 include(framework/cmake/GaDefaults.cmake)   # universal, macOS 11; before project()
 project(MyPlugin VERSION 1.0.0)
-include(framework/cmake/GaPlugin.cmake)     # JUCE (-DJUCE_DIR=...) and the functions below
+include(framework/cmake/GaPlugin.cmake)     # JUCE (../JUCE or -DJUCE_DIR=...) and the functions below
 
 ga_add_plugin(MyPlugin
     PRODUCT_NAME "My Plugin"
@@ -25,6 +25,21 @@ ga_add_tool(MyPlugin MyPluginTests OPTION MYPLUGIN_TESTS SOURCES tools/Tests.cpp
 `ga_add_plugin()` sets what every GA plug-in shares: company GA, manufacturer code `Gaau`, VST3 and
 Audio Unit, link-time optimisation and dead-code stripping. `ga_add_tool()` builds a command-line tool
 that runs the plug-in's own code, only when its option is on.
+
+JUCE is pinned: every GA build uses the version in `cmake/juce-version.txt`, locally and in CI, and
+configuring fails with any other. It is found next to the plug-in repo (`../JUCE`), otherwise at
+`-DJUCE_DIR=...`:
+
+```sh
+git clone --depth 1 --branch "$(cat framework/cmake/juce-version.txt)" https://github.com/juce-framework/JUCE.git ../JUCE
+```
+
+## Checks (.github/workflows/)
+
+Every framework commit builds Hyper! Hyper! Dimension with it (branch `framework-next`, or the
+repository variable `HHD_REF`) and runs its null test and screenshot check, as strict as in its own
+repo, plus a Windows build. A framework change that alters Hyper! Hyper! Dimension's sound or a single
+pixel fails.
 
 ## Interface (ui/)
 

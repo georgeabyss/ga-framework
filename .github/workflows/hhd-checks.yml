@@ -1,0 +1,80 @@
+# Every framework commit is checked against Hyper! Hyper! Dimension: its null test (the sound) and its
+# screenshot check (the interface), as strict as in its own repo. Hyper! Hyper! Dimension is checked
+# out at HHD_REF (repository variable; default framework-next, the branch that follows the framework)
+# and this commit replaces its framework/ submodule. Plus a Windows build, so MSVC sees every change.
+name: Hyper! Hyper! Dimension checks
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+env:
+  HHD_REF: ${{ vars.HHD_REF || 'framework-next' }}
+
+jobs:
+  checks:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: georgeabyss/GA-hyper-hyper-dimension
+          ref: ${{ env.HHD_REF }}
+          path: hhd
+
+      - uses: actions/checkout@v4
+        with:
+          path: hhd/framework
+
+      - name: Get JUCE (cmake/juce-version.txt) and Ninja
+        run: |
+          git clone --depth 1 --branch "$(cat hhd/framework/cmake/juce-version.txt)" https://github.com/juce-framework/JUCE.git JUCE
+          brew install ninja
+
+      - name: Build the test tools
+        working-directory: hhd
+        run: |
+          cmake -B build-tools -G Ninja -DCMAKE_BUILD_TYPE=Release -DHHD_NULLTEST=ON -DHHD_SCREENSHOTS=ON
+          cmake --build build-tools --target HyperDimNullTest HyperDimScreenshots
+
+      # same tolerances as Hyper! Hyper! Dimension's own CI (see its docs/refactor-plan.md)
+      - name: Null test
+        working-directory: hhd
+        run: build-tools/HyperDimNullTest check tests/reference --tolerance-db -121 --tolerance-match linear
+
+      - name: Screenshot check
+        if: success() || failure()
+        working-directory: hhd
+        run: build-tools/HyperDimScreenshots check tests/reference/screenshots --pixel-tolerance 0
+
+      - name: Keep what differs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: check-results
+          path: |
+            hhd/build-tools/nulltest-out/
+            hhd/build-tools/screenshot-diff/
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: georgeabyss/GA-hyper-hyper-dimension
+          ref: ${{ env.HHD_REF }}
+          path: hhd
+
+      - uses: actions/checkout@v4
+        with:
+          path: hhd/framework
+
+      - name: Get JUCE (cmake/juce-version.txt)
+        shell: bash
+        run: git clone --depth 1 --branch "$(cat hhd/framework/cmake/juce-version.txt)" https://github.com/juce-framework/JUCE.git JUCE
+
+      - name: Build
+        working-directory: hhd
+        run: |
+          cmake -B build
+          cmake --build build --config Release --parallel
