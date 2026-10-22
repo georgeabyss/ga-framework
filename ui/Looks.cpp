@@ -162,9 +162,12 @@ void LedMatrixDisplay::paint (juce::Graphics& g, juce::Rectangle<float> r, const
 
 //==============================================================================
 // Knob look taken from the Knob-Tuner, radius 14 by default. pos is 0..1.
+// The knob's sizes are today's, times s = knobRadius / its default (exactly 1 for the default, so
+// every coordinate stays as it was); 1 px outlines stay 1 px.
 void GaKnobFace::paint (juce::Graphics& g, const Theme& t, juce::Point<float> c, float pos, bool hot) const
 {
-    const float R = t.sizes.knobRadius, ri = R - 2.6f;
+    const float s = t.sizes.knobRadius / Theme::Sizes{}.knobRadius;
+    const float R = 14.0f * s, ri = R - 2.6f * s;
     const float startAngle = juce::degreesToRadians (225.0f), endAngle = juce::degreesToRadians (495.0f);
 
     // three position dots: start, centre, end
@@ -175,17 +178,17 @@ void GaKnobFace::paint (juce::Graphics& g, const Theme& t, juce::Point<float> c,
                                                          { endAngle,   t.colours.markDim } };
         for (auto& d : dots)
         {
-            const auto p = ui::polar (c, R + 5.5f, d.first);
+            const auto p = ui::polar (c, R + 5.5f * s, d.first);
             g.setColour (d.second);
-            g.fillEllipse (p.x - 1.3f, p.y - 1.3f, 2.6f, 2.6f);
+            g.fillEllipse (p.x - 1.3f * s, p.y - 1.3f * s, 2.6f * s, 2.6f * s);
         }
     }
 
     // soft shadow
     {
         juce::Path sp;
-        sp.addEllipse (c.x - R - 1.2f, c.y + 1.6f - R - 1.2f, (R + 1.2f) * 2.0f, (R + 1.2f) * 2.0f);
-        juce::DropShadow (juce::Colours::black.withAlpha (0.75f), 5, { 0, 0 }).drawForPath (g, sp);
+        sp.addEllipse (c.x - R - 1.2f * s, c.y + 1.6f * s - R - 1.2f * s, (R + 1.2f * s) * 2.0f, (R + 1.2f * s) * 2.0f);
+        juce::DropShadow (juce::Colours::black.withAlpha (0.75f), juce::roundToInt (5.0f * s), { 0, 0 }).drawForPath (g, sp);
     }
 
     // outer ring, linear fade from top to bottom (a little lighter while hovered / dragged)
@@ -196,7 +199,7 @@ void GaKnobFace::paint (juce::Graphics& g, const Theme& t, juce::Point<float> c,
     g.setColour (juce::Colours::black);
     g.drawEllipse (c.x - R, c.y - R, R * 2.0f, R * 2.0f, 1.0f);
     g.setColour (juce::Colours::white.withAlpha (0.14f));
-    g.drawEllipse (c.x - R + 0.7f, c.y - R + 0.7f, (R - 0.7f) * 2.0f, (R - 0.7f) * 2.0f, 1.0f);
+    g.drawEllipse (c.x - R + 0.7f, c.y - R + 0.7f, (R - 0.7f) * 2.0f, (R - 0.7f) * 2.0f, 1.0f);   // a 1 px highlight just inside
 
     // darker core
     g.setGradientFill (juce::ColourGradient (t.colours.knobCoreTop, c.x, c.y - ri,
@@ -207,24 +210,26 @@ void GaKnobFace::paint (juce::Graphics& g, const Theme& t, juce::Point<float> c,
 
     // pointer from the rim inwards
     const float a = startAngle + pos * (endAngle - startAngle);
-    const float r1 = R - 1.3f, r0 = r1 - 6.5f;
+    const float r1 = R - 1.3f * s, r0 = r1 - 6.5f * s;
     juce::Path line;
     line.startNewSubPath (ui::polar (c, r0, a));
     line.lineTo (ui::polar (c, r1, a));
     g.setColour (juce::Colours::black.withAlpha (0.5f));
-    g.strokePath (line, juce::PathStrokeType (3.4f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded),
-                  juce::AffineTransform::translation (0.5f, 0.7f));
+    g.strokePath (line, juce::PathStrokeType (3.4f * s, juce::PathStrokeType::curved, juce::PathStrokeType::rounded),
+                  juce::AffineTransform::translation (0.5f * s, 0.7f * s));
     g.setColour (hot ? t.colours.accentHi : t.colours.accent);
-    g.strokePath (line, juce::PathStrokeType (2.6f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+    g.strokePath (line, juce::PathStrokeType (2.6f * s, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
 }
 
-// small dial for the bottom strip: radius 7 by default, with a value arc around it
+// small dial for the bottom strip: radius 7 by default, with a value arc around it; sizes times
+// s = miniKnobRadius / its default
 void GaKnobFace::paintMini (juce::Graphics& g, const Theme& t, juce::Point<float> c, float pos, bool hot) const
 {
-    const float R = t.sizes.miniKnobRadius, ra = R + 2.6f;
+    const float s = t.sizes.miniKnobRadius / Theme::Sizes{}.miniKnobRadius;
+    const float R = 7.0f * s, ra = R + 2.6f * s;
     const float startAngle = juce::degreesToRadians (225.0f), endAngle = juce::degreesToRadians (495.0f);
     const float a = startAngle + pos * (endAngle - startAngle);
-    const juce::PathStrokeType arcStroke (1.6f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded);
+    const juce::PathStrokeType arcStroke (1.6f * s, juce::PathStrokeType::curved, juce::PathStrokeType::rounded);
 
     juce::Path track, value;
     track.addCentredArc (c.x, c.y, ra, ra, 0.0f, startAngle, endAngle, true);
@@ -245,9 +250,9 @@ void GaKnobFace::paintMini (juce::Graphics& g, const Theme& t, juce::Point<float
     g.drawEllipse (c.x - R, c.y - R, R * 2.0f, R * 2.0f, 1.0f);
 
     juce::Path line;
-    line.startNewSubPath (ui::polar (c, 2.0f, a));
-    line.lineTo (ui::polar (c, R - 1.5f, a));
+    line.startNewSubPath (ui::polar (c, 2.0f * s, a));
+    line.lineTo (ui::polar (c, R - 1.5f * s, a));
     g.setColour (hot ? t.colours.accentHi : t.colours.accent);
-    g.strokePath (line, juce::PathStrokeType (1.6f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+    g.strokePath (line, juce::PathStrokeType (1.6f * s, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
 }
 }

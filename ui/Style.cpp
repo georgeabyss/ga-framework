@@ -145,22 +145,23 @@ namespace ga::ui
     // darker inset panel that sets the bottom strip and the goniometer apart from the rest
     void drawInsetPanel (juce::Graphics& g, const Theme& t, juce::Rectangle<float> r)
     {
-        const float corner = t.sizes.insetCorner;
+        const float s = t.sizes.insetCorner / Theme::Sizes{}.insetCorner;   // today's radii times s
         g.setGradientFill (juce::ColourGradient (t.colours.insetTop, 0.0f, r.getY(), t.colours.insetBottom, 0.0f, r.getBottom(), false));
-        g.fillRoundedRectangle (r, corner);
+        g.fillRoundedRectangle (r, 5.0f * s);
         g.setColour (juce::Colours::black);
-        g.drawRoundedRectangle (r, corner, 1.0f);
+        g.drawRoundedRectangle (r, 5.0f * s, 1.0f);
         g.setColour (t.colours.accent.withAlpha (0.18f));
-        g.drawRoundedRectangle (r.reduced (1.0f), corner - 1.0f, 1.0f);
+        g.drawRoundedRectangle (r.reduced (1.0f), 4.0f * s, 1.0f);
         g.setColour (juce::Colours::white.withAlpha (0.05f));
-        g.drawLine (r.getX() + corner, r.getBottom() + 0.5f, r.getRight() - corner, r.getBottom() + 0.5f, 1.0f);
+        g.drawLine (r.getX() + 5.0f * s, r.getBottom() + 0.5f, r.getRight() - 5.0f * s, r.getBottom() + 0.5f, 1.0f);
     }
 
 
     // round LED: lit while the section is active (its amount above 0)
     void drawLed (juce::Graphics& g, const Theme& t, juce::Point<float> c, bool on, float alarm)
     {
-        const float r = t.sizes.ledRadius, gr = t.sizes.ledGlow;
+        const float s = t.sizes.ledRadius / Theme::Sizes{}.ledRadius;   // today's sizes times s
+        const float r = 3.0f * s, gr = 6.5f * s;
         auto mix = [alarm] (juce::Colour calm, juce::Colour hot) { return calm.interpolatedWith (hot, alarm); };
         const auto glow = mix (t.colours.accent, t.colours.alarm);
         if (on)
@@ -168,7 +169,7 @@ namespace ga::ui
             g.setGradientFill (juce::ColourGradient (glow.withAlpha (0.45f + 0.2f * alarm), c.x, c.y, glow.withAlpha (0.0f), c.x + gr, c.y, true));
             g.fillEllipse (c.x - gr, c.y - gr, gr * 2.0f, gr * 2.0f);
         }
-        juce::ColourGradient lens (on ? mix (t.colours.ledLit, t.colours.alarmLight) : t.colours.lensOff, c.x - 0.6f, c.y - 0.9f,
+        juce::ColourGradient lens (on ? mix (t.colours.ledLit, t.colours.alarmLight) : t.colours.lensOff, c.x - 0.6f * s, c.y - 0.9f * s,
                                    on ? mix (t.colours.accentDeep, t.colours.alarmDeep) : t.colours.ledOffEdge, c.x + r, c.y + r, true);
         if (on) lens.addColour (0.55, glow);
         g.setGradientFill (lens);

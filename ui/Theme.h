@@ -118,16 +118,18 @@ struct Theme
         TextStyle menuHeader { 7.5f, true, 0.14f };
     } type;
 
+    // Sizes: the drawing code keeps today's sizes and multiplies them by token / default, which is
+    // exactly 1 for the defaults. A larger knob, LED or lamp grows as a whole; the defaults stay
+    // bit-identical.
     struct Sizes
     {
-        float knobRadius = 14.0f;
-        float miniKnobRadius = 7.0f;
+        float knobRadius = 14.0f;       // the whole face grows with it: dots, shadow, pointer
+        float miniKnobRadius = 7.0f;    // with its value arc and pointer
         int   knobHoverLift = 12;       // knob face brightening while hovered, per colour channel
-        float ledRadius = 3.0f;
-        float ledGlow = 6.5f;           // radius of a lit LED's glow
-        float lampSize = 12.0f;         // the lens; its holder is a little larger
+        float ledRadius = 3.0f;         // its glow, lens highlight and hover ring grow with it
+        float lampSize = 12.0f;         // the lens; its holder and reflections grow with it
         float recessCorner = 2.5f;
-        float insetCorner = 5.0f;
+        float insetCorner = 5.0f;       // its inner edge and bottom highlight follow
         float screwInsetX = 12.0f;      // screw centres, from the window's corners
         float screwInsetY = 22.0f;
         float titleBaseline = 17.0f;    // from the top of the header row

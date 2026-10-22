@@ -465,7 +465,7 @@ void StepBox::showMenu (bool valuesOnly)
 //==============================================================================
 bool LampButton::hitTest (int x, int y)
 {
-    const int size = juce::roundToInt (themeOf (*this).sizes.lampSize);
+    const int size = juce::roundToInt (themeOf (*this).sizes.lampSize);   // the lens
     return juce::Rectangle<int> (size, size).withCentre (getLocalBounds().getCentre()).contains (x, y);
 }
 
@@ -474,40 +474,39 @@ void LampButton::paintButton (juce::Graphics& g, bool, bool)
     const auto& t = themeOf (*this);
     const bool on = getToggleState();
     const auto c = getLocalBounds().toFloat().getCentre();
-    const float size = t.sizes.lampSize;
+    const float s = t.sizes.lampSize / Theme::Sizes{}.lampSize;   // today's sizes times s (exactly 1 by default)
 
     // thin dark holder, then the milky lens (glow stays inside)
-    const auto holderSize = (float) (size * 1.2);   // in double, so the default stays exactly 14.4
-    const auto holder = juce::Rectangle<float> (holderSize, holderSize).withCentre (c);
+    const auto holder = juce::Rectangle<float> (14.4f * s, 14.4f * s).withCentre (c);
     g.setColour (t.colours.hole);
-    g.fillRoundedRectangle (holder, 1.2f);
+    g.fillRoundedRectangle (holder, 1.2f * s);
     g.setColour (juce::Colours::black);
-    g.drawRoundedRectangle (holder, 1.2f, 1.0f);
+    g.drawRoundedRectangle (holder, 1.2f * s, 1.0f);
 
-    const auto lens = juce::Rectangle<float> (size, size).withCentre (c);
+    const auto lens = juce::Rectangle<float> (12.0f * s, 12.0f * s).withCentre (c);
     {
-        const auto centre = juce::Point<float> (c.x, c.y - 0.6f);
+        const auto centre = juce::Point<float> (c.x, c.y - 0.6f * s);
         juce::ColourGradient grad (on ? t.colours.lampLit : t.colours.lensOff, centre.x, centre.y,
-                                   on ? t.colours.lampLitEdge : t.colours.lampOffEdge, centre.x + (float) (size * 0.65), centre.y, true);
+                                   on ? t.colours.lampLitEdge : t.colours.lampOffEdge, centre.x + 7.8f * s, centre.y, true);
         if (on) grad.addColour (0.55, t.colours.accent);
         g.setGradientFill (grad);
-        g.fillRoundedRectangle (lens, 0.8f);
+        g.fillRoundedRectangle (lens, 0.8f * s);
     }
     g.setColour (juce::Colours::black.withAlpha (0.35f));
-    g.drawRoundedRectangle (lens, 0.8f, 1.0f);
+    g.drawRoundedRectangle (lens, 0.8f * s, 1.0f);
 
     // two soft reflections, drawn inside the lens as vector gradients (no clipping, so they
     // stay smooth at every window size)
     {
-        const float ys[2] = { c.y - 4.3f, c.y + 4.3f };
+        const float ys[2] = { c.y - 4.3f * s, c.y + 4.3f * s };
         const float as[2] = { on ? 0.60f : 0.26f, on ? 0.42f : 0.17f };
         for (int i = 0; i < 2; ++i)
         {
-            const auto band = juce::Rectangle<float> (lens.getX() + 1.0f, ys[i] - 1.6f, lens.getWidth() - 2.0f, 3.2f);
+            const auto band = juce::Rectangle<float> (lens.getX() + 1.0f * s, ys[i] - 1.6f * s, lens.getWidth() - 2.0f * s, 3.2f * s);
             juce::ColourGradient rg (juce::Colours::white.withAlpha (as[i]), band.getCentreX(), band.getCentreY(),
                                      juce::Colours::white.withAlpha (0.0f), band.getCentreX(), band.getY(), false);
             g.setGradientFill (rg);
-            g.fillRoundedRectangle (band, 1.2f);
+            g.fillRoundedRectangle (band, 1.2f * s);
         }
     }
 }
@@ -567,8 +566,9 @@ void SectionLed::paintButton (juce::Graphics& g, bool isOver, bool)
     ui::drawLed (g, t, c, lit);
     if (isOver)
     {
+        const float s = t.sizes.ledRadius / Theme::Sizes{}.ledRadius;   // the hover ring grows with the LED
         g.setColour (t.colours.accentHi.withAlpha (0.45f));
-        g.drawEllipse (c.x - 4.5f, c.y - 4.5f, 9.0f, 9.0f, 1.0f);
+        g.drawEllipse (c.x - 4.5f * s, c.y - 4.5f * s, 9.0f * s, 9.0f * s, 1.0f);
     }
 }
 
