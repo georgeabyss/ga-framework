@@ -359,7 +359,7 @@ StepBox::StepBox (juce::RangedAudioParameter& p, bool showNames, bool showArrows
     const auto r = p.getNormalisableRange();
     minValue = (int) r.start;
     maxValue = (int) r.end;
-    setSize (names ? 64 : 30, names ? 19 : 30);   // native size
+    setSize (names ? 62 : 30, names ? 18 : 30);   // native size: a 58 x 16 box, like a square button's 16
     setMouseCursor (names ? juce::MouseCursor::PointingHandCursor : juce::MouseCursor::UpDownResizeCursor);
     setTooltip (! names ? "Drag up/down, click the arrows or use the wheel. Double-click: default. Right-click: menu."
                         : arrows ? "Click: choose. Arrows or wheel: step. Right-click: menu."
@@ -372,7 +372,7 @@ void StepBox::setWideNumber (std::function<int (int, int)> rule, float px)
     wide = true;
     arrowStep = std::move (rule);
     pxPerStep = px;
-    setSize (64, 19);   // the size of a drop-down
+    setSize (62, 18);   // the size of a drop-down
     setTooltip ("Drag up/down for single steps; the arrows double / halve. Double-click: default. Right-click: menu.");
     repaint();
 }
