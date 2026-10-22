@@ -48,6 +48,7 @@ Compiled into every plug-in by `ga_add_plugin()`; include as `#include "ui/Contr
 | File | |
 | --- | --- |
 | `ui/Theme.h` | `ga::Theme`: every colour, text style and size the framework draws with; the defaults are the GA look. `Theme::withAccent()` derives the highlight and dark shades from one colour; override any of them afterwards. `ga::themeOf (component)` finds the editor's theme |
+| `ui/Looks.h` | The swappable looks, each an interface with the GA look built in: `TextEffect` (title; `PlainText`, `EchoSmear` with its echoes as settings), `FaceplateStyle` (`GradientFaceplate`), `PresetDisplayStyle` (`LedMatrixDisplay`), `KnobFace` (`GaKnobFace`). A plug-in sets them in `Theme::looks`, or writes its own class; a new look never touches the others |
 | `ui/Style.h` | `ga::ui`: drawing in a theme's colours (recess, inset panel, knob faces, LED, padlock, screw), `drawTitle()`, `drawLogo()`; `ga::LookAndFeel` holds the theme and draws menus, tooltips and dialogs in it |
 | `ui/Controls.h` | `ga::Knob` (regular and mini, lockable), `StepBox`, `LampButton`, `SquareToggle`, `SectionLed`, `LedToggle`, `MenuBox` |
 | `ui/Meters.h` | `ga::CorrelationMeter`, `ga::Goniometer` |

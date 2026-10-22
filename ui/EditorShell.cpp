@@ -118,12 +118,7 @@ void EditorShell::Faceplate::paint (juce::Graphics& g)
     const float W = (float) getWidth(), H = (float) getHeight();
 
     // one long faceplate
-    g.setGradientFill (juce::ColourGradient (t.colours.faceplateTop, 0.0f, 0.0f, t.colours.faceplateBottom, 0.0f, H, false));
-    g.fillAll();
-    g.setColour (t.colours.faceplateEdge.withAlpha (0.7f));
-    g.drawLine (0.0f, 1.5f, W, 1.5f, 1.0f);
-    g.setColour (juce::Colours::black.withAlpha (0.8f));
-    g.drawLine (0.0f, H - 1.5f, W, H - 1.5f, 1.0f);
+    t.looks.faceplate->paint (g, getLocalBounds().toFloat(), t);
 
     if (shell.goniometer.isVisible())
     {

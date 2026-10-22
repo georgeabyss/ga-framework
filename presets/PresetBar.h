@@ -37,7 +37,6 @@ private:
     juce::Rectangle<float> zoneRect (Zone) const;   // in native coordinates
     juce::AffineTransform fit() const;              // native coordinates -> the bounds
 
-    void paintDisplay (juce::Graphics&, juce::Rectangle<float>);
     void paintArrowButton (juce::Graphics&, Zone);
     void showMenu();
     void askForName (const juce::String& title, const juce::String& initial, std::function<void (juce::String)> done);

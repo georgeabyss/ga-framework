@@ -17,12 +17,6 @@ namespace ga::ui
 
     namespace
     {
-        // a colour with each of r, g, b raised by lift (the knobs while hovered)
-        juce::Colour lifted (juce::Colour c, int lift)
-        {
-            return juce::Colour ((juce::uint8) (c.getRed() + lift), (juce::uint8) (c.getGreen() + lift), (juce::uint8) (c.getBlue() + lift));
-        }
-
         const juce::Path& logoPath()
         {
             static const juce::Path gothicGA = makeGothicGA (0.75f, 6.2f, 38.0f);   // built once
@@ -146,95 +140,7 @@ namespace ga::ui
         g.setColour (juce::Colours::white.withAlpha (0.15f));
         g.drawLine (cx - 2.5f, cy + 0.8f, cx + 2.5f, cy + 0.8f, 0.6f);
     }
-    // Knob look taken from the Knob-Tuner, radius 14 by default. pos is 0..1.
-    void drawKnob (juce::Graphics& g, const Theme& t, juce::Point<float> c, float pos, bool hot)
-    {
-        const float R = t.sizes.knobRadius, ri = R - 2.6f;
-        const float startAngle = juce::degreesToRadians (225.0f), endAngle = juce::degreesToRadians (495.0f);
 
-        // three position dots: start, centre, end
-        {
-            const float mid = 0.5f * (startAngle + endAngle);
-            const std::pair<float, juce::Colour> dots[] = { { startAngle, t.colours.markDim },
-                                                             { mid,        t.colours.mark },
-                                                             { endAngle,   t.colours.markDim } };
-            for (auto& d : dots)
-            {
-                const auto p = polar (c, R + 5.5f, d.first);
-                g.setColour (d.second);
-                g.fillEllipse (p.x - 1.3f, p.y - 1.3f, 2.6f, 2.6f);
-            }
-        }
-
-        // soft shadow
-        {
-            juce::Path sp;
-            sp.addEllipse (c.x - R - 1.2f, c.y + 1.6f - R - 1.2f, (R + 1.2f) * 2.0f, (R + 1.2f) * 2.0f);
-            juce::DropShadow (juce::Colours::black.withAlpha (0.75f), 5, { 0, 0 }).drawForPath (g, sp);
-        }
-
-        // outer ring, linear fade from top to bottom (a little lighter while hovered / dragged)
-        const int lift = hot ? t.sizes.knobHoverLift : 0;
-        g.setGradientFill (juce::ColourGradient (lifted (t.colours.knobRingTop, lift), c.x, c.y - R,
-                                                 lifted (t.colours.knobRingBottom, lift), c.x, c.y + R, false));
-        g.fillEllipse (c.x - R, c.y - R, R * 2.0f, R * 2.0f);
-        g.setColour (juce::Colours::black);
-        g.drawEllipse (c.x - R, c.y - R, R * 2.0f, R * 2.0f, 1.0f);
-        g.setColour (juce::Colours::white.withAlpha (0.14f));
-        g.drawEllipse (c.x - R + 0.7f, c.y - R + 0.7f, (R - 0.7f) * 2.0f, (R - 0.7f) * 2.0f, 1.0f);
-
-        // darker core
-        g.setGradientFill (juce::ColourGradient (t.colours.knobCoreTop, c.x, c.y - ri,
-                                                 t.colours.knobCoreBottom, c.x, c.y + ri, false));
-        g.fillEllipse (c.x - ri, c.y - ri, ri * 2.0f, ri * 2.0f);
-        g.setColour (juce::Colours::black.withAlpha (0.5f));
-        g.drawEllipse (c.x - ri, c.y - ri, ri * 2.0f, ri * 2.0f, 1.0f);
-
-        // pointer from the rim inwards
-        const float a = startAngle + pos * (endAngle - startAngle);
-        const float r1 = R - 1.3f, r0 = r1 - 6.5f;
-        juce::Path line;
-        line.startNewSubPath (polar (c, r0, a));
-        line.lineTo (polar (c, r1, a));
-        g.setColour (juce::Colours::black.withAlpha (0.5f));
-        g.strokePath (line, juce::PathStrokeType (3.4f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded),
-                      juce::AffineTransform::translation (0.5f, 0.7f));
-        g.setColour (hot ? t.colours.accentHi : t.colours.accent);
-        g.strokePath (line, juce::PathStrokeType (2.6f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
-    }
-
-    // small dial for the bottom strip: radius 7 by default, with a value arc around it
-    void drawMiniKnob (juce::Graphics& g, const Theme& t, juce::Point<float> c, float pos, bool hot)
-    {
-        const float R = t.sizes.miniKnobRadius, ra = R + 2.6f;
-        const float startAngle = juce::degreesToRadians (225.0f), endAngle = juce::degreesToRadians (495.0f);
-        const float a = startAngle + pos * (endAngle - startAngle);
-        const juce::PathStrokeType arcStroke (1.6f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded);
-
-        juce::Path track, value;
-        track.addCentredArc (c.x, c.y, ra, ra, 0.0f, startAngle, endAngle, true);
-        g.setColour (t.colours.track);
-        g.strokePath (track, arcStroke);
-        if (pos > 0.002f)
-        {
-            value.addCentredArc (c.x, c.y, ra, ra, 0.0f, startAngle, a, true);
-            g.setColour (hot ? t.colours.accentHi : t.colours.accent.withAlpha (0.85f));
-            g.strokePath (value, arcStroke);
-        }
-
-        const int lift = hot ? t.sizes.knobHoverLift : 0;
-        g.setGradientFill (juce::ColourGradient (lifted (t.colours.knobRingTop, lift), c.x, c.y - R,
-                                                 lifted (t.colours.miniRingBottom, lift), c.x, c.y + R, false));
-        g.fillEllipse (c.x - R, c.y - R, R * 2.0f, R * 2.0f);
-        g.setColour (juce::Colours::black);
-        g.drawEllipse (c.x - R, c.y - R, R * 2.0f, R * 2.0f, 1.0f);
-
-        juce::Path line;
-        line.startNewSubPath (polar (c, 2.0f, a));
-        line.lineTo (polar (c, R - 1.5f, a));
-        g.setColour (hot ? t.colours.accentHi : t.colours.accent);
-        g.strokePath (line, juce::PathStrokeType (1.6f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
-    }
 
     // darker inset panel that sets the bottom strip and the goniometer apart from the rest
     void drawInsetPanel (juce::Graphics& g, const Theme& t, juce::Rectangle<float> r)
@@ -309,22 +215,16 @@ namespace ga::ui
 
     void drawTitle (juce::Graphics& g, const Theme& t, const juce::String& title, const juce::String& subtitle, float x, float baseline)
     {
-        // title in the accent: static unison echo, shadow, gradient fill
+        // the title in the theme's effect; its line runs from the top of the capitals (3/4 of the
+        // size above the baseline) to a little below the baseline
         {
             juce::GlyphArrangement ga;
             ga.addLineOfText (t.font (t.type.title), title, x, baseline);
             juce::Path p;
             ga.createPath (p);
-            for (auto e : { std::pair<float, float> { 7.0f, 0.07f }, { 3.5f, 0.14f } })
-            {
-                g.setColour (t.colours.accentHi.withAlpha (e.second));
-                g.fillPath (p, juce::AffineTransform::translation (e.first, 0.0f));
-            }
-            juce::DropShadow (juce::Colours::black.withAlpha (0.6f), 5, { 0, 2 }).drawForPath (g, p);
-            juce::ColourGradient tg (t.colours.accentLight, 0.0f, baseline - 18.0f, t.colours.accentDeep, 0.0f, baseline + 1.0f, false);
-            tg.addColour (0.55, t.colours.accent);
-            g.setGradientFill (tg);
-            g.fillPath (p);
+            const float size = t.type.title.size;
+            const juce::Rectangle<float> line (x, baseline - size * 0.75f, p.getBounds().getRight() - x, size * 0.75f + size / 24.0f);
+            t.looks.title->paint (g, p, line, t);
         }
         g.setColour (t.colours.subtitle);
         g.setFont (t.font (t.type.subtitle));

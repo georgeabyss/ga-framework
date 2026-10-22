@@ -7,62 +7,6 @@ namespace
 {
     constexpr float kArrowW = 17.0f, kGap = 2.0f;
 
-    // the LED grid of the display: square dots on a fixed pitch, text rows 2..8
-    constexpr float kPitch = 1.8f, kDot = 1.3f;
-    constexpr int   kCols = 109, kRows = 12, kTextRow = 2, kTextCol = 3, kSlots = 17;
-
-    // classic 5 x 7 LED matrix font: one byte per row, bit 4 = leftmost dot
-    const std::array<juce::uint8, 7>& glyph (juce::juce_wchar c)
-    {
-        static const std::map<juce::juce_wchar, std::array<juce::uint8, 7>> font {
-            { 'A', { 0b01110, 0b10001, 0b10001, 0b11111, 0b10001, 0b10001, 0b10001 } },
-            { 'B', { 0b11110, 0b10001, 0b10001, 0b11110, 0b10001, 0b10001, 0b11110 } },
-            { 'C', { 0b01110, 0b10001, 0b10000, 0b10000, 0b10000, 0b10001, 0b01110 } },
-            { 'D', { 0b11100, 0b10010, 0b10001, 0b10001, 0b10001, 0b10010, 0b11100 } },
-            { 'E', { 0b11111, 0b10000, 0b10000, 0b11110, 0b10000, 0b10000, 0b11111 } },
-            { 'F', { 0b11111, 0b10000, 0b10000, 0b11110, 0b10000, 0b10000, 0b10000 } },
-            { 'G', { 0b01110, 0b10001, 0b10000, 0b10111, 0b10001, 0b10001, 0b01111 } },
-            { 'H', { 0b10001, 0b10001, 0b10001, 0b11111, 0b10001, 0b10001, 0b10001 } },
-            { 'I', { 0b01110, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b01110 } },
-            { 'J', { 0b00111, 0b00010, 0b00010, 0b00010, 0b00010, 0b10010, 0b01100 } },
-            { 'K', { 0b10001, 0b10010, 0b10100, 0b11000, 0b10100, 0b10010, 0b10001 } },
-            { 'L', { 0b10000, 0b10000, 0b10000, 0b10000, 0b10000, 0b10000, 0b11111 } },
-            { 'M', { 0b10001, 0b11011, 0b10101, 0b10101, 0b10001, 0b10001, 0b10001 } },
-            { 'N', { 0b10001, 0b10001, 0b11001, 0b10101, 0b10011, 0b10001, 0b10001 } },
-            { 'O', { 0b01110, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b01110 } },
-            { 'P', { 0b11110, 0b10001, 0b10001, 0b11110, 0b10000, 0b10000, 0b10000 } },
-            { 'Q', { 0b01110, 0b10001, 0b10001, 0b10001, 0b10101, 0b10010, 0b01101 } },
-            { 'R', { 0b11110, 0b10001, 0b10001, 0b11110, 0b10100, 0b10010, 0b10001 } },
-            { 'S', { 0b01111, 0b10000, 0b10000, 0b01110, 0b00001, 0b00001, 0b11110 } },
-            { 'T', { 0b11111, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b00100 } },
-            { 'U', { 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b01110 } },
-            { 'V', { 0b10001, 0b10001, 0b10001, 0b10001, 0b10001, 0b01010, 0b00100 } },
-            { 'W', { 0b10001, 0b10001, 0b10001, 0b10101, 0b10101, 0b10101, 0b01010 } },
-            { 'X', { 0b10001, 0b10001, 0b01010, 0b00100, 0b01010, 0b10001, 0b10001 } },
-            { 'Y', { 0b10001, 0b10001, 0b10001, 0b01010, 0b00100, 0b00100, 0b00100 } },
-            { 'Z', { 0b11111, 0b00001, 0b00010, 0b00100, 0b01000, 0b10000, 0b11111 } },
-            { '0', { 0b01110, 0b10001, 0b10011, 0b10101, 0b11001, 0b10001, 0b01110 } },
-            { '1', { 0b00100, 0b01100, 0b00100, 0b00100, 0b00100, 0b00100, 0b01110 } },
-            { '2', { 0b01110, 0b10001, 0b00001, 0b00010, 0b00100, 0b01000, 0b11111 } },
-            { '3', { 0b11111, 0b00010, 0b00100, 0b00010, 0b00001, 0b10001, 0b01110 } },
-            { '4', { 0b00010, 0b00110, 0b01010, 0b10010, 0b11111, 0b00010, 0b00010 } },
-            { '5', { 0b11111, 0b10000, 0b11110, 0b00001, 0b00001, 0b10001, 0b01110 } },
-            { '6', { 0b00110, 0b01000, 0b10000, 0b11110, 0b10001, 0b10001, 0b01110 } },
-            { '7', { 0b11111, 0b00001, 0b00010, 0b00100, 0b01000, 0b01000, 0b01000 } },
-            { '8', { 0b01110, 0b10001, 0b10001, 0b01110, 0b10001, 0b10001, 0b01110 } },
-            { '9', { 0b01110, 0b10001, 0b10001, 0b01111, 0b00001, 0b00010, 0b01100 } },
-            { '*', { 0b00000, 0b00100, 0b10101, 0b01110, 0b10101, 0b00100, 0b00000 } },
-            { '-', { 0b00000, 0b00000, 0b00000, 0b11111, 0b00000, 0b00000, 0b00000 } },
-            { '!', { 0b00100, 0b00100, 0b00100, 0b00100, 0b00100, 0b00000, 0b00100 } },
-            { '\'', { 0b00100, 0b00100, 0b01000, 0b00000, 0b00000, 0b00000, 0b00000 } },
-            { '.', { 0b00000, 0b00000, 0b00000, 0b00000, 0b00000, 0b01100, 0b01100 } },
-            { '&', { 0b01100, 0b10010, 0b10100, 0b01000, 0b10101, 0b10010, 0b01101 } },
-            { '?', { 0b01110, 0b10001, 0b00001, 0b00010, 0b00100, 0b00000, 0b00100 } },
-        };
-        static const std::array<juce::uint8, 7> blank {};
-        const auto it = font.find (c);
-        return it != font.end() ? it->second : blank;
-    }
 }
 
 PresetBar::PresetBar (PresetManager& manager)
@@ -85,7 +29,7 @@ void PresetBar::refresh()
 
     const int i = presets.currentIndex();
     const auto number = i >= 0 ? juce::String (i + 1).paddedLeft ('0', 2) : juce::String ("--");
-    const auto newText = (number + " " + presets.currentName()).toUpperCase().substring (0, kSlots - 1);
+    const auto newText = (number + " " + presets.currentName()).toUpperCase().substring (0, themeOf (*this).looks.presetDisplay->maxChars());
     const bool newModified = presets.isModified();
     if (newText != text || newModified != modified)
     {
@@ -135,7 +79,8 @@ void PresetBar::paint (juce::Graphics& g)
         g.addTransform (t);
     paintArrowButton (g, Zone::prev);
     paintArrowButton (g, Zone::next);
-    paintDisplay (g, zoneRect (Zone::display));
+    const auto& t = themeOf (*this);
+    t.looks.presetDisplay->paint (g, zoneRect (Zone::display), { text, modified, muted, blinkOn, menuOpen }, t);
 }
 
 void PresetBar::paintArrowButton (juce::Graphics& g, Zone z)
@@ -157,68 +102,6 @@ void PresetBar::paintArrowButton (juce::Graphics& g, Zone z)
     g.fillPath (tri);
 }
 
-void PresetBar::paintDisplay (juce::Graphics& g, juce::Rectangle<float> r)
-{
-    // dark glass
-    const auto& c = themeOf (*this).colours;
-    g.setGradientFill (juce::ColourGradient (c.displayTop, 0.0f, r.getY(), c.displayBottom, 0.0f, r.getBottom(), false));
-    g.fillRect (r);
-
-    // which cells are lit: "NN NAME" from the left with the star in the last slot, or the
-    // safety mute warning in the middle of the grid
-    std::vector<bool> lit ((size_t) (kCols * kRows), false);
-    auto put = [&lit] (juce::juce_wchar ch, int firstCol)
-    {
-        const auto& rows = glyph (ch);
-        for (int row = 0; row < 7; ++row)
-            for (int col = 0; col < 5; ++col)
-                if ((rows[(size_t) row] >> (4 - col)) & 1)
-                    lit[(size_t) ((kTextRow + row) * kCols + firstCol + col)] = true;
-    };
-    if (muted)
-    {
-        const juce::String warning ("! OUTPUT MUTED !");
-        const int firstCol = (kCols - (warning.length() * 6 - 1)) / 2;
-        if (blinkOn)
-            for (int i = 0; i < warning.length(); ++i)
-                put (warning[i], firstCol + i * 6);
-    }
-    else
-    {
-        for (int i = 0; i < text.length() && i < kSlots - 1; ++i)
-            put (text[i], kTextCol + i * 6);
-        if (modified)
-            put ('*', kTextCol + (kSlots - 1) * 6);
-    }
-
-    // the grid, centred in the glass: every cell is a square LED, lit or not
-    const float gridW = (float) (kCols - 1) * kPitch + kDot, gridH = (float) (kRows - 1) * kPitch + kDot;
-    const float x0 = r.getX() + (r.getWidth() - gridW) * 0.5f, y0 = r.getY() + (r.getHeight() - gridH) * 0.5f;
-    juce::Path off, on;
-    for (int row = 0; row < kRows; ++row)
-        for (int col = 0; col < kCols; ++col)
-            (lit[(size_t) (row * kCols + col)] ? on : off).addRectangle (x0 + (float) col * kPitch, y0 + (float) row * kPitch, kDot, kDot);
-
-    g.setColour (c.displayDotOff);
-    g.fillPath (off);
-
-    // glow: the lit dots blurred outwards in two soft passes, then the dots themselves
-    const auto glow = muted ? c.displayMuteGlow : c.accent;   // safety mute: orange-red
-    for (auto pass : { std::pair<float, float> { 2.6f, 0.10f }, { 1.4f, 0.22f } })
-    {
-        g.setColour (glow.withAlpha (pass.second));
-        g.strokePath (on, juce::PathStrokeType (pass.first, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
-    }
-    g.setColour (muted ? c.displayMuteDot : c.displayDotOn);
-    g.fillPath (on);
-
-    // reflection on the glass and the frame (lavender while the list is open)
-    g.setGradientFill (juce::ColourGradient (juce::Colours::white.withAlpha (0.05f), 0.0f, r.getY(),
-                                             juce::Colours::white.withAlpha (0.0f), 0.0f, r.getCentreY(), false));
-    g.fillRect (r.withHeight (r.getHeight() * 0.45f));
-    g.setColour (muted ? c.displayMuteEdge.withAlpha (0.8f) : menuOpen ? c.accent.withAlpha (0.7f) : juce::Colours::black);
-    g.drawRect (r, 1.0f);
-}
 
 void PresetBar::mouseMove (const juce::MouseEvent& e)
 {

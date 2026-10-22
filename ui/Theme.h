@@ -1,6 +1,7 @@
 #pragma once
 
 #include <juce_gui_basics/juce_gui_basics.h>
+#include "Looks.h"
 
 namespace ga
 {
@@ -13,7 +14,7 @@ struct TextStyle
     bool mono = false;
 };
 
-// Everything a GA faceplate is drawn with: colours, type and sizes. The defaults are the GA look
+// Everything a GA faceplate is drawn with: colours, type, sizes and looks. The defaults are the GA look
 // (Hyper! Hyper! Dimension). A plug-in passes its theme to ga::EditorShell; every component reads it
 // through ga::themeOf(). For another colour, start from withAccent() and override what you like.
 struct Theme
@@ -132,6 +133,15 @@ struct Theme
         float titleBaseline = 17.0f;    // from the top of the header row
         float dimAlpha = 0.45f;         // controls of a section (or effect) that is off
     } sizes;
+
+    // the parts drawn by a swappable look (ui/Looks.h): the GA ones, or the plug-in's own
+    struct Looks
+    {
+        std::shared_ptr<const TextEffect> title = std::make_shared<EchoSmear>();
+        std::shared_ptr<const FaceplateStyle> faceplate = std::make_shared<GradientFaceplate>();
+        std::shared_ptr<const PresetDisplayStyle> presetDisplay = std::make_shared<LedMatrixDisplay>();
+        std::shared_ptr<const KnobFace> knob = std::make_shared<GaKnobFace>();
+    } looks;
 
     // The GA theme with another accent colour: the highlight and the dark shades (lenses, the preset
     // display) are derived from it. Override any of them afterwards.

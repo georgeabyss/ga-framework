@@ -23,10 +23,6 @@ namespace ga::ui
     void drawHoverWash (juce::Graphics&, const Theme&, juce::Rectangle<float>);
     void drawDropDownMark (juce::Graphics&, float x, float y, juce::Colour);
 
-    // knob faces; pos is 0..1, hot = hovered or dragged
-    void drawKnob (juce::Graphics&, const Theme&, juce::Point<float> centre, float pos, bool hot);
-    void drawMiniKnob (juce::Graphics&, const Theme&, juce::Point<float> centre, float pos, bool hot);
-
     // round LED; alarm 0..1 turns a lit LED from the accent to the alarm colour
     void drawLed (juce::Graphics&, const Theme&, juce::Point<float> centre, bool on, float alarm = 0.0f);
 
@@ -41,8 +37,8 @@ namespace ga::ui
     // small caps name under a control; (cx, cy) is the centre of the control
     void drawName (juce::Graphics&, const Theme&, float cx, float cy, const juce::String& name);
 
-    // plug-in title: big title in the accent with a unison echo, its text starting at x on the
-    // baseline, small grey subtitle below
+    // plug-in title: big title in the theme's title effect, its text starting at x on the baseline,
+    // small grey subtitle below
     void drawTitle (juce::Graphics&, const Theme&, const juce::String& title, const juce::String& subtitle, float x, float baseline);
     float titleWidth (const Theme&, const juce::String& title);   // of the title's letters, without the echo
 

@@ -91,7 +91,7 @@ void Knob::paint (juce::Graphics& g)
     if (style == Style::mini)
     {
         const float cy = (float) getHeight() * 0.5f;
-        ui::drawMiniKnob (g, t, { 12.0f, cy }, proportion(), hot);
+        t.looks.knob->paintMini (g, t, { 12.0f, cy }, proportion(), hot);
 
         // the name; with a lock it is the lock switch: lavender with a padlock while locked,
         // brighter with a faint open padlock while hovered
@@ -112,7 +112,7 @@ void Knob::paint (juce::Graphics& g)
         return;
     }
 
-    ui::drawKnob (g, t, { 28.0f, 22.0f }, proportion(), hot);
+    t.looks.knob->paint (g, t, { 28.0f, 22.0f }, proportion(), hot);
     if (valueEditor == nullptr)
     {
         g.setColour (valueColour);
