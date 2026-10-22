@@ -7,6 +7,7 @@
 
 #include "ui/Section.h"
 #include "ui/Modulation.h"
+#include "ui/Bands.h"
 
 namespace
 {
@@ -181,6 +182,63 @@ namespace
         return sheet;
     }
 
+    // a made-up trace: a burst that rings out (the real one is the band's impulse response)
+    ga::BandCard::Trace burst (float decay, float wobble)
+    {
+        ga::BandCard::Trace t;
+        for (int i = 0; i < 200; ++i)
+        {
+            const float x = (float) i / 200.0f;
+            const float env = std::exp (-x * decay) * (0.45f + 0.55f * std::abs (std::sin (wobble * x * x + 1.0f)));
+            t.high.push_back (env);
+            t.low.push_back (-env * 0.9f);
+        }
+        return t;
+    }
+
+    // Bands: three cards sharing the width, split handles between them
+    std::unique_ptr<Sheet> bandsSheet()
+    {
+        auto sheet = std::make_unique<Sheet> (778, 124);
+        auto& s = *sheet;
+        auto& strip = s.make<ga::BandStrip>();
+
+        struct B { const char* name; const char* info; const char* range; const char* status; bool selected, active, soloed; float decay; };
+        std::vector<ga::BandCard*> cards;
+        for (auto b : { B { "LOW", "64 stages", "20 Hz - 180 Hz \xc2\xb7 1.3 s", "LINKED", false, true, false, 3.0f },
+                        B { "MID", "256 / 32 stages", "180 Hz - 2.4 kHz \xc2\xb7 788 ms", "M \xe2\x89\xa0 S", true, true, true, 5.0f },
+                        B { "HIGH", "16 stages", "2.4 kHz - 20 kHz \xc2\xb7 6 ms", "LINKED", false, false, false, 9.0f } })
+        {
+            auto& card = s.make<ga::BandCard>();
+            auto& led = s.make<ga::SectionLed>();
+            led.setLit (b.active);
+            auto& solo = s.make<ga::SoloButton>();
+            solo.setToggleState (b.soloed, dontSendNotification);
+            auto& stereo = s.make<ga::StepBox> (choice (s, "stereo", { "L / R", "M / S" }, 1), true);
+            card.setControls (&led, &solo, &stereo);
+            card.setName (b.name);
+            card.setInfo (b.info, String::fromUTF8 (b.range), String::fromUTF8 (b.status));
+            card.setTraces (burst (b.decay, 40.0f), b.selected ? burst (b.decay * 0.4f, 25.0f) : ga::BandCard::Trace {});
+            card.setSelected (b.selected);
+            card.setActive (b.active);
+            cards.push_back (&card);
+        }
+
+        auto hz = [] (float v, int) { return v < 1000.0f ? String (roundToInt (v)) + " Hz" : String (v / 1000.0f, 1) + " kHz"; };
+        std::vector<ga::SplitHandle*> splits;
+        for (float f : { 180.0f, 2400.0f })
+        {
+            auto& p = s.make<AudioParameterFloat> (ParameterID { "split", 1 }, "Split", NormalisableRange<float> (20.0f, 20000.0f, 0.0f, 0.25f), f,
+                                                   AudioParameterFloatAttributes().withStringFromValueFunction (hz));
+            splits.push_back (&s.make<ga::SplitHandle> (p));
+        }
+        strip.setBands (cards, splits);
+        strip.setBounds (14, 32, 750, 80);
+        s.addAndMakeVisible (strip);
+        s.caption ({ 14, 14, 700, 10 }, "BAND STRIP: CARDS (MID SELECTED, WITH A SECOND TRACE; HIGH OFF) AND SPLIT HANDLES");
+        return sheet;
+    }
+
     struct SheetDef
     {
         const char* name;
@@ -194,6 +252,7 @@ namespace
             { "stages", stagesSheet },
             { "solo", soloSheet },
             { "modulation", modulationSheet },
+            { "bands", bandsSheet },
         };
         return all;
     }

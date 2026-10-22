@@ -71,6 +71,10 @@ struct Theme
         juce::Colour grid            { 0xff1f2125 };   // goniometer axes
         juce::Colour popup           { 0xff17181b };   // menus, tooltips, dialogs
         juce::Colour popupBottom     { 0xff111215 };   // menu gradient, bottom (the top is faceplateTop)
+        juce::Colour card            { 0xff101114 };   // band cards
+        juce::Colour cardSelected    { 0xff17151d };
+        juce::Colour trace           { 0xff8a6ad8 };   // a band card's trace (accentHi while selected)
+        juce::Colour traceOff        { 0xff3a3d44 };   // ... while the band is off
         juce::Colour button          { 0xff222327 };   // dialog buttons
 
         // screws
