@@ -53,8 +53,9 @@ private:
     juce::Rectangle<int> scopeBox() const;
     void setScopeOpen (bool open);
     void updateConstraints();
-    void applyScale (float scale);
-    float currentScale() const { return (float) getHeight() / (float) baseHeight; }
+    void applyScale (float scale);   // the window size, relative to 100 %
+    float layoutScale() const { return (float) getHeight() / (float) baseHeight; }   // screen pixels per layout pixel
+    float windowScale() const { return layoutScale() / config.defaultScale; }       // relative to 100 %, as in the size menu
 
     juce::AudioProcessorValueTreeState& state;
     const ProcessorConfig& config;

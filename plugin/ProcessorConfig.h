@@ -22,7 +22,8 @@ struct ProcessorConfig
     float safetyLevel = 15.85f;                         // linear peak (+24 dBFS); above it, or NaN, the output mutes
     std::vector<int> oversamplingFactors { 1, 2, 4, 8 };   // powers of two, 1 = off; at most 8
     int defaultOversampling = 2;
-    std::vector<float> windowSizes { 0.75f, 1.0f, 1.25f, 1.5f, 1.75f, 2.0f };   // the size menu, without sizes larger than the screen
-    float minScale = 0.6f, maxScale = 2.5f;              // dragging the corner
+    float defaultScale = 1.0f;                           // screen pixels per layout pixel at 100 %
+    std::vector<float> windowSizes { 0.75f, 1.0f, 1.25f, 1.5f, 1.75f, 2.0f };   // the size menu (relative to 100 %), without sizes larger than the screen
+    float minScale = 0.6f, maxScale = 2.5f;              // dragging the corner, relative to 100 %
 };
 }

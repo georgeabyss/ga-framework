@@ -3,10 +3,6 @@
 
 namespace ga
 {
-namespace
-{
-}
-
 EditorShell::EditorShell (ProcessorBase& p, juce::AudioProcessorValueTreeState& s, BottomStrip::Host host, Theme theme)
     : AudioProcessorEditor (&p), state (s), config (p.getConfig()), laf (std::move (theme)), strip (s, std::move (host), p.getConfig())
 {
@@ -22,10 +18,10 @@ EditorShell::EditorShell (ProcessorBase& p, juce::AudioProcessorValueTreeState& 
     {
         const auto sizes = menuSizes();
         for (int i = 0; i < (int) sizes.size(); ++i)
-            if (std::abs (sizes[(size_t) i] - currentScale()) < 0.01f) return i;
+            if (std::abs (sizes[(size_t) i] - windowScale()) < 0.01f) return i;
         return -1;
     };
-    strip.sizeBox.getText = [this] { return juce::String (juce::roundToInt (currentScale() * 100.0f)) + "%"; };
+    strip.sizeBox.getText = [this] { return juce::String (juce::roundToInt (windowScale() * 100.0f)) + "%"; };
     strip.sizeBox.onSelect = [this] (int i) { applyScale (menuSizes()[(size_t) i]); };
 
     strip.onScopeToggle = [this] (bool open) { setScopeOpen (open); };
@@ -59,7 +55,7 @@ void EditorShell::setPanel (Panel& p, int w, int h, int mx, int my)
     setConstrainer (&constrainer);
     updateConstraints();
     setResizable (true, true);
-    applyScale ((float) (double) state.state.getProperty (prop::uiScale, 1.0));   // saved with the session
+    applyScale ((float) (double) state.state.getProperty (prop::uiScale, 1.0));   // saved with the session, relative to 100 %
 }
 
 // the goniometer box, to the right of the plug-in's panel
@@ -84,7 +80,8 @@ std::vector<float> EditorShell::menuSizes() const
     std::vector<float> sizes;
     for (float sc : config.windowSizes)
         if (display == nullptr || sizes.empty()
-            || ((float) contentWidth() * sc <= display->userBounds.getWidth() && (float) baseHeight * sc <= display->userBounds.getHeight()))
+            || ((float) contentWidth() * sc * config.defaultScale <= display->userBounds.getWidth()
+                && (float) baseHeight * sc * config.defaultScale <= display->userBounds.getHeight()))
             sizes.push_back (sc);   // the smallest always stays
     return sizes;
 }
@@ -94,13 +91,13 @@ void EditorShell::setScopeOpen (bool open)
     state.state.setProperty (prop::scopeOpen, open, nullptr);
     goniometer.setVisible (open);
     updateConstraints();
-    applyScale (currentScale());
+    applyScale (windowScale());
     faceplate.repaint();
 }
 
 void EditorShell::updateConstraints()
 {
-    const double w = (double) contentWidth(), h = (double) baseHeight;
+    const double w = (double) contentWidth() * config.defaultScale, h = (double) baseHeight * config.defaultScale;   // at 100 %
     constrainer.setFixedAspectRatio (w / h);
     constrainer.setSizeLimits (juce::roundToInt (w * config.minScale), juce::roundToInt (h * config.minScale),
                                juce::roundToInt (w * config.maxScale), juce::roundToInt (h * config.maxScale));
@@ -108,8 +105,8 @@ void EditorShell::updateConstraints()
 
 void EditorShell::applyScale (float scale)
 {
-    scale = juce::jlimit (config.minScale, config.maxScale, scale);
-    setSize (juce::roundToInt ((float) contentWidth() * scale), juce::roundToInt ((float) baseHeight * scale));
+    const float layoutScale = juce::jlimit (config.minScale, config.maxScale, scale) * config.defaultScale;
+    setSize (juce::roundToInt ((float) contentWidth() * layoutScale), juce::roundToInt ((float) baseHeight * layoutScale));
 }
 
 void EditorShell::resized()
@@ -117,11 +114,10 @@ void EditorShell::resized()
     if (panel == nullptr)
         return;
 
-    // the faceplate is laid out at 100 % and scaled as a whole
-    const float scale = currentScale();
-    faceplate.setTransform (juce::AffineTransform::scale (scale));
+    // the faceplate is laid out in layout pixels and scaled as a whole
+    faceplate.setTransform (juce::AffineTransform::scale (layoutScale()));
     faceplate.setBounds (0, 0, contentWidth(), baseHeight);
-    state.state.setProperty (prop::uiScale, scale, nullptr);
+    state.state.setProperty (prop::uiScale, windowScale(), nullptr);
     faceplate.repaint();
 }
 
