@@ -41,6 +41,7 @@ struct Theme
         juce::Colour alarm         { 0xffff9a3c };
         juce::Colour alarmLight    { 0xfffff0e0 };   // centre of an LED in alarm
         juce::Colour alarmDeep     { 0xffc8641e };   // rim of an LED in alarm
+        juce::Colour onAlarm       { 0xff2a1606 };   // text on an alarm background (solo on)
         juce::Colour negative      { 0xffff7a8a };   // negative correlation
 
         // text
@@ -118,6 +119,7 @@ struct Theme
         TextStyle boxNumber  { 11.5f, true, 0.0f, true };
         TextStyle menu       { 10.5f };
         TextStyle menuHeader { 7.5f, true, 0.14f };
+        TextStyle buttonLetter { 7.5f, true };           // the S of the solo button
     } type;
 
     // Sizes: the drawing code keeps today's sizes and multiplies them by token / default, which is

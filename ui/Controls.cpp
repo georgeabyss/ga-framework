@@ -625,6 +625,39 @@ float LedToggle::ledCentreX() const
 }
 
 //==============================================================================
+void SoloButton::paintButton (juce::Graphics& g, bool over, bool)
+{
+    const auto& t = themeOf (*this);
+    const auto c = getLocalBounds().toFloat().getCentre();
+    const float size = (float) juce::jmin (getWidth(), getHeight()) - 2.0f;
+    const auto r = juce::Rectangle<float> (size, size).withCentre (c);
+    const bool on = getToggleState();
+
+    if (on)
+    {
+        // lit: a glow around it, then the orange face
+        g.setGradientFill (juce::ColourGradient (t.colours.alarm.withAlpha (0.45f), c.x, c.y, t.colours.alarm.withAlpha (0.0f), c.x + size, c.y, true));
+        g.fillEllipse (r.expanded (size * 0.5f));
+        juce::ColourGradient face (t.colours.alarmLight, c.x - size * 0.05f, c.y - size * 0.1f, t.colours.alarmDeep, r.getRight(), r.getBottom(), true);
+        face.addColour (0.6, t.colours.alarm);
+        g.setGradientFill (face);
+        g.fillRoundedRectangle (r, t.sizes.recessCorner);
+        g.setColour (juce::Colours::black);
+        g.drawRoundedRectangle (r, t.sizes.recessCorner, 1.0f);
+    }
+    else
+    {
+        ui::drawRecess (g, t, r);
+        if (over)
+            ui::drawHoverWash (g, t, r);
+    }
+
+    g.setFont (t.font (t.type.buttonLetter));
+    g.setColour (on ? t.colours.onAlarm : over ? t.colours.text : t.colours.mark);
+    g.drawText ("S", r, juce::Justification::centred, false);
+}
+
+//==============================================================================
 void DiceButton::paintButton (juce::Graphics& g, bool over, bool down)
 {
     // a die: rounded square with five pips

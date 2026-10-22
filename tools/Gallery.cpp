@@ -120,6 +120,26 @@ namespace
         return sheet;
     }
 
+    // Solo: off, hovered, on
+    std::unique_ptr<Sheet> soloSheet()
+    {
+        auto sheet = std::make_unique<Sheet> (200, 64);
+        auto& s = *sheet;
+        int x = 20;
+        for (int state : { 0, 1, 2 })
+        {
+            auto& solo = s.make<ga::SoloButton>();
+            solo.setToggleState (state == 2, dontSendNotification);
+            if (state == 1)
+                solo.setState (Button::buttonOver);
+            solo.setTopLeftPosition (x, 32);
+            s.addAndMakeVisible (solo);
+            x += 50;
+        }
+        s.caption ({ 14, 14, 180, 10 }, "SOLO: OFF, HOVERED, ON");
+        return sheet;
+    }
+
     struct SheetDef
     {
         const char* name;
@@ -131,6 +151,7 @@ namespace
         static const std::vector<SheetDef> all {
             { "section", sectionSheet },
             { "stages", stagesSheet },
+            { "solo", soloSheet },
         };
         return all;
     }

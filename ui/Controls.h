@@ -151,6 +151,20 @@ private:
     float alarm = 0.0f;
 };
 
+// square "S" button for solo: lights in the alarm colour while on
+class SoloButton : public juce::Button
+{
+public:
+    SoloButton() : juce::Button ("solo")
+    {
+        setSize (18, 18);
+        setClickingTogglesState (true);
+        setMouseCursor (juce::MouseCursor::PointingHandCursor);
+        setTooltip ("Solo");
+    }
+    void paintButton (juce::Graphics&, bool isOver, bool isDown) override;
+};
+
 // a dice icon: click to randomise something (a section, everything)
 class DiceButton : public juce::Button
 {

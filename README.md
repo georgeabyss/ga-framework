@@ -50,7 +50,7 @@ Compiled into every plug-in by `ga_add_plugin()`; include as `#include "ui/Contr
 | `ui/Theme.h` | `ga::Theme`: every colour, text style and size the framework draws with; the defaults are the GA look. `Theme::withAccent()` derives the highlight and dark shades from one colour; override any of them afterwards. `ga::themeOf (component)` finds the editor's theme |
 | `ui/Looks.h` | The swappable looks, each an interface with the GA look built in: `TextEffect` (title; `PlainText`, `EchoSmear` with its echoes as settings), `FaceplateStyle` (`GradientFaceplate`), `PresetDisplayStyle` (`LedMatrixDisplay`), `KnobFace` (`GaKnobFace`). A plug-in sets them in `Theme::looks`, or writes its own class; a new look never touches the others |
 | `ui/Style.h` | `ga::ui`: drawing in a theme's colours (recess, inset panel, knob faces, LED, padlock, screw), `drawTitle()`, `drawLogo()`; `ga::LookAndFeel` holds the theme and draws menus, tooltips and dialogs in it |
-| `ui/Controls.h` | `ga::Knob` (regular and mini, lockable), `StepBox`, `LampButton`, `SquareToggle`, `SectionLed`, `LedToggle`, `DiceButton`, `MenuBox`; each has its native size from the start. `anchorOf()`: the point a control is lined up by (a knob's dial) |
+| `ui/Controls.h` | `ga::Knob` (regular and mini, lockable), `StepBox`, `LampButton`, `SquareToggle`, `SectionLed`, `LedToggle`, `SoloButton`, `DiceButton`, `MenuBox`; each has its native size from the start. `anchorOf()`: the point a control is lined up by (a knob's dial) |
 | `ui/Section.h` | `ga::Section`: header line (title left, the plug-in's controls right-aligned, rule underneath) and body (one control per column, centred on the section's centre line, a knob by its dial; names for controls that do not draw their own). `ga::ColumnGrid`: N equal columns for a row of sections, a gap between sections, each section spanning some columns |
 | `ui/Meters.h` | `ga::CorrelationMeter`, `ga::Goniometer` |
 | `ui/BottomStrip.h` | `ga::BottomStrip`: Bypass, Dry/Wet, Bass Mono \| oversampling, filter, window size \| correlation, Phase Protect, goniometer button. Asks the plug-in through a small `Host` struct of callbacks. Native size 750 × 28, scaled as one piece: `setArea()` fills the area as far as its proportions allow, centred |
@@ -132,3 +132,4 @@ alters any pixel of them.
 | --- | --- |
 | [section](docs/controls/section.png) | `ga::Section` with header controls (dropdown, dice, LED) and a body on four columns; the same section off; `ga::DiceButton` |
 | [stages](docs/controls/stages.png) | `ga::StepBox` as a Stages box (`setWideNumber`): the size of a drop-down, arrows double / halve, drag for single steps |
+| [solo](docs/controls/solo.png) | `ga::SoloButton`: off, hovered, on (alarm orange) |
