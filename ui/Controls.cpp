@@ -308,9 +308,19 @@ StepBox::StepBox (juce::RangedAudioParameter& p, bool showNames, bool showArrows
     attach.sendInitialUpdate();
 }
 
+void StepBox::setWideNumber (std::function<int (int, int)> rule, float px)
+{
+    wide = true;
+    arrowStep = std::move (rule);
+    pxPerStep = px;
+    setSize (64, 19);   // the size of a drop-down
+    setTooltip ("Drag up/down for single steps; the arrows double / halve. Double-click: default. Right-click: menu.");
+    repaint();
+}
+
 juce::Rectangle<float> StepBox::boxRect() const
 {
-    if (names)
+    if (names || wide)
         return getLocalBounds().toFloat().reduced (2.0f, 1.0f);
     return juce::Rectangle<float> (22.0f, 22.0f).withCentre (getLocalBounds().toFloat().getCentre());
 }
@@ -320,7 +330,7 @@ int StepBox::arrowAt (juce::Point<float> p) const
     if (! arrows)
         return 0;
     const auto r = boxRect();
-    if (p.x < r.getRight() - (names ? 12.0f : 9.0f) || p.x > r.getRight() + 2.0f)
+    if (p.x < r.getRight() - (names || wide ? 12.0f : 9.0f) || p.x > r.getRight() + 2.0f)
         return 0;
     return p.y < r.getCentreY() ? 1 : -1;
 }
@@ -350,10 +360,10 @@ void StepBox::paint (juce::Graphics& g)
     }
 
     g.setColour (t.colours.boxText);
-    if (names)
+    if (names || wide)
     {
         g.setFont (t.font (t.type.boxText));
-        g.drawText (valueText (value).toUpperCase(),
+        g.drawText (wide ? juce::String (value) : valueText (value).toUpperCase(),
                     r.withTrimmedRight (11.0f).withTrimmedLeft (2.0f), juce::Justification::centred, false);
     }
     else
@@ -397,7 +407,14 @@ void StepBox::mouseDown (const juce::MouseEvent& e)
     dragging = false;
     if (e.mods.isPopupMenu()) { showMenu (false); return; }
 
-    if (const int a = arrowAt (e.position)) { step (a); return; }
+    if (const int a = arrowAt (e.position))
+    {
+        if (arrowStep != nullptr)
+            attach.setValueAsCompleteGesture ((float) juce::jlimit (minValue, maxValue, arrowStep (value, a)));
+        else
+            step (a);
+        return;
+    }
     if (names) { showMenu (true); return; }   // the name box is a drop-down
 
     dragging = true;
@@ -413,11 +430,11 @@ void StepBox::mouseDrag (const juce::MouseEvent& e)
         return;
     dragAccum += lastY - e.position.y;
     lastY = e.position.y;
-    const float pxPerStep = e.mods.isShiftDown() ? 24.0f : 10.0f;
-    const int steps = (int) (dragAccum / pxPerStep);
+    const float px = wide ? pxPerStep * (e.mods.isShiftDown() ? 2.4f : 1.0f) : (e.mods.isShiftDown() ? 24.0f : 10.0f);
+    const int steps = (int) (dragAccum / px);
     if (steps != 0)
     {
-        dragAccum -= (float) steps * pxPerStep;
+        dragAccum -= (float) steps * px;
         attach.setValueAsPartOfGesture ((float) juce::jlimit (minValue, maxValue, value + steps));
     }
 }

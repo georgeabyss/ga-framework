@@ -93,6 +93,33 @@ namespace
         return sheet;
     }
 
+    // Stages: a number box the size of a drop-down; arrows double / halve, dragging moves single steps
+    std::unique_ptr<Sheet> stagesSheet()
+    {
+        auto sheet = std::make_unique<Sheet> (340, 70);
+        auto& s = *sheet;
+        auto doubleOrHalve = [] (int v, int direction)
+        {
+            return direction > 0 ? (v >= 512 ? 1000 : v * 2) : (v == 1000 ? 512 : juce::jmax (1, v / 2));
+        };
+        int x = 14;
+        for (float value : { 64.0f, 1000.0f, 1.0f })
+        {
+            auto& p = s.make<AudioParameterFloat> (ParameterID { "stages", 1 }, "Stages", NormalisableRange<float> (1.0f, 1000.0f, 1.0f), value);
+            auto& box = s.make<ga::StepBox> (p);
+            box.setWideNumber (doubleOrHalve, 3.0f);
+            box.setTopLeftPosition (x, 32);
+            s.addAndMakeVisible (box);
+            x += 76;
+        }
+        auto& dropdown = s.make<ga::StepBox> (choice (s, "mode", { "Behaved", "Unhinged" }, 0), true);
+        dropdown.setTopLeftPosition (x + 10, 32);
+        s.addAndMakeVisible (dropdown);
+        s.caption ({ 14, 14, 220, 10 }, "STAGES BOX: 64, 1000, 1");
+        s.caption ({ x + 10, 14, 90, 10 }, "DROP-DOWN");
+        return sheet;
+    }
+
     struct SheetDef
     {
         const char* name;
@@ -103,6 +130,7 @@ namespace
     {
         static const std::vector<SheetDef> all {
             { "section", sectionSheet },
+            { "stages", stagesSheet },
         };
         return all;
     }

@@ -58,10 +58,16 @@ private:
 // integer / choice value with two small arrows. Number box: drag up/down, click the arrows, wheel.
 // With showNames the box is wide, shows the current choice and opens a list when clicked;
 // without arrows it is a plain drop-down. Right-click = menu (all values, reset, host items).
+// setWideNumber() makes a number box the size of a drop-down (Stages): its arrows follow a rule of
+// the plug-in's (double / halve), dragging moves single steps.
 class StepBox : public juce::Component, public juce::SettableTooltipClient
 {
 public:
     explicit StepBox (juce::RangedAudioParameter&, bool showNames = false, bool showArrows = true);
+
+    // arrowStep (value, +1 or -1) gives the value after an arrow click; pxPerStep is the drag distance
+    // for one step (Shift: 2.4 times as far)
+    void setWideNumber (std::function<int (int value, int direction)> arrowStep, float pxPerStep);
 
     void paint (juce::Graphics&) override;
     void mouseMove (const juce::MouseEvent&) override;
@@ -80,7 +86,9 @@ private:
     juce::String valueText (int v) const;
 
     juce::RangedAudioParameter& param;
-    bool names = false, arrows = true;
+    bool names = false, arrows = true, wide = false;
+    std::function<int (int, int)> arrowStep;
+    float pxPerStep = 10.0f;
     juce::ParameterAttachment attach;
     int value = 0, minValue = 0, maxValue = 1, hoverArrow = 0;
     float lastY = 0.0f, dragAccum = 0.0f, wheelAccum = 0.0f;

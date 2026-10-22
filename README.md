@@ -131,3 +131,4 @@ alters any pixel of them.
 | Sheet | |
 | --- | --- |
 | [section](docs/controls/section.png) | `ga::Section` with header controls (dropdown, dice, LED) and a body on four columns; the same section off; `ga::DiceButton` |
+| [stages](docs/controls/stages.png) | `ga::StepBox` as a Stages box (`setWideNumber`): the size of a drop-down, arrows double / halve, drag for single steps |
