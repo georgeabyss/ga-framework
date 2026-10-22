@@ -69,10 +69,16 @@ void Section::paint (juce::Graphics& g)
     const auto& s = t.sizes;
     const int w = getWidth();
 
-    // header: the title and the rule under it
+    // header: the title and the rule under it. Dimmed, each part is drawn into a transparency
+    // layer: setColour() would undo a plain setOpacity().
+    auto dimmed = [&g, &s] (bool dim, auto&& draw)
     {
-        juce::Graphics::ScopedSaveState ss (g);
-        g.setOpacity (headerDimmed ? s.dimAlpha : 1.0f);
+        if (dim) g.beginTransparencyLayer (s.dimAlpha);
+        draw();
+        if (dim) g.endTransparencyLayer();
+    };
+    dimmed (headerDimmed, [&]
+    {
         g.setFont (t.font (t.type.sectionTitle));
         g.setColour (t.colours.sectionTitle);
         const int centre = juce::roundToInt (s.sectionHeaderCentre);
@@ -82,14 +88,15 @@ void Section::paint (juce::Graphics& g)
         g.drawHorizontalLine (rule, 0.0f, (float) w);
         g.setColour (t.colours.track);
         g.drawHorizontalLine (rule + 1, 0.0f, (float) w);
-    }
+    });
 
     // the names of the controls that do not draw their own
-    juce::Graphics::ScopedSaveState ss (g);
-    g.setOpacity (bodyDimmed ? s.dimAlpha : 1.0f);
-    for (int i = 0; i < columns; ++i)
-        if (cells[(size_t) i].name.isNotEmpty())
-            ui::drawName (g, t, (float) juce::roundToInt (columnCentre (i)), s.sectionBodyCentre, cells[(size_t) i].name);
+    dimmed (bodyDimmed, [&]
+    {
+        for (int i = 0; i < columns; ++i)
+            if (cells[(size_t) i].name.isNotEmpty())
+                ui::drawName (g, t, (float) juce::roundToInt (columnCentre (i)), s.sectionBodyCentre, cells[(size_t) i].name);
+    });
 }
 
 void Section::resized()
