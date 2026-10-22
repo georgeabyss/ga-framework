@@ -49,6 +49,7 @@ struct Theme
         juce::Colour valueActive   { 0xffffffff };   // the value while it is dragged
         juce::Colour boxText       { 0xfff1f2f5 };   // inside step boxes and drop-downs
         juce::Colour label         { 0xff8f9299 };   // names, titles
+        juce::Colour sectionTitle  { 0xff8f92a0 };   // section headers
         juce::Colour labelHover    { 0xffc9cbd1 };
         juce::Colour subtitle      { 0xff7d8087 };
         juce::Colour mark          { 0xff9a9da6 };   // arrows, drop-down marks, the knob's centre dot
@@ -109,6 +110,7 @@ struct Theme
         TextStyle label      { 6.5f, false, 0.15f };     // small labels in the bottom strip
         TextStyle scale      { 6.0f };                   // meter scale (-1, +1)
         TextStyle panelTitle { 6.5f, true, 0.14f };      // GONIOMETER
+        TextStyle sectionTitle { 8.0f, true, 0.16f };    // HYPER!, DISPERSE
         TextStyle scopeAxis  { 6.5f, true, 0.12f };      // M, L, R
         TextStyle value      { 8.5f, false, 0.0f, true };
         TextStyle valueEdit  { 9.0f, false, 0.0f, true };
@@ -133,6 +135,14 @@ struct Theme
         float screwInsetX = 12.0f;      // screw centres, from the window's corners
         float screwInsetY = 22.0f;
         float titleBaseline = 17.0f;    // from the top of the header row; the subtitle follows the title's size
+
+        // a section (ga::Section), from its top edge
+        float sectionHeaderCentre = 10.0f;   // the header line: title and controls centred on it
+        float sectionRule = 20.0f;           // the rule under the header
+        float sectionBodyCentre = 50.0f;     // the controls' centre line (a knob's dial)
+        float sectionTitleInset = 2.0f;      // the title, from the left edge
+        float sectionControlInset = 3.0f;    // the last header control, from the right edge
+        float sectionControlGap = 6.0f;      // between header controls
         float logoScale = 1.0f;         // the gothic GA
         float dimAlpha = 0.45f;         // controls of a section (or effect) that is off
     } sizes;

@@ -118,3 +118,16 @@ function(ga_add_tool plugin tool)
         target_link_libraries(${tool} PRIVATE ${plugin})
     endif()
 endfunction()
+
+# ga_add_gallery(<plugin>)
+#
+# The control gallery (tools/Gallery.cpp): every framework control in its states, rendered into
+# docs/controls. Built with the plug-in's JUCE configuration, only with -DGA_GALLERY=ON:
+#   cmake -B build-tools -DGA_GALLERY=ON && cmake --build build-tools --target <plugin>Gallery
+#   build-tools/<plugin>Gallery framework/docs/controls          (write)
+#   build-tools/<plugin>Gallery check framework/docs/controls    (compare)
+function(ga_add_gallery plugin)
+    ga_add_tool(${plugin} ${plugin}Gallery
+        OPTION GA_GALLERY DESCRIPTION "Build the GA control gallery"
+        SOURCES ${GA_FRAMEWORK_DIR}/tools/Gallery.cpp MAIN ${GA_FRAMEWORK_DIR}/tools/GalleryMain.cpp)
+endfunction()

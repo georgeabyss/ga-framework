@@ -54,10 +54,23 @@ Knob::Knob (juce::RangedAudioParameter& p, const juce::String& name, bool centre
       detentWidth (centreDetent ? 0.04f : 0.0f),
       attach (p, [this] (float v) { value = v; repaint(); })
 {
+    setSize (st == Style::regular ? 56 : 80, st == Style::regular ? 70 : 26);   // native size
     setRepaintsOnMouseActivity (true);
     setMouseCursor (juce::MouseCursor::UpDownResizeCursor);
     setTooltip ("Drag up/down (Shift: fine). Double-click: default. Right-click: menu.");
     attach.sendInitialUpdate();
+}
+
+juce::Point<int> Knob::dialCentre() const
+{
+    return style == Style::regular ? juce::Point<int> (28, 22) : juce::Point<int> (12, getHeight() / 2);
+}
+
+juce::Point<int> anchorOf (const juce::Component& c)
+{
+    if (auto* knob = dynamic_cast<const Knob*> (&c))
+        return knob->dialCentre();
+    return { c.getWidth() / 2, c.getHeight() / 2 };
 }
 
 // Travel is the drag position. With a detent, the centre is stretched over detentWidth,
@@ -287,6 +300,7 @@ StepBox::StepBox (juce::RangedAudioParameter& p, bool showNames, bool showArrows
     const auto r = p.getNormalisableRange();
     minValue = (int) r.start;
     maxValue = (int) r.end;
+    setSize (names ? 64 : 30, names ? 19 : 30);   // native size
     setMouseCursor (names ? juce::MouseCursor::PointingHandCursor : juce::MouseCursor::UpDownResizeCursor);
     setTooltip (! names ? "Drag up/down, click the arrows or use the wheel. Double-click: default. Right-click: menu."
                         : arrows ? "Click: choose. Arrows or wheel: step. Right-click: menu."
@@ -591,6 +605,19 @@ float LedToggle::ledCentreX() const
 {
     const auto& t = themeOf (*this);
     return 2.0f + juce::GlyphArrangement::getStringWidth (t.font (t.type.label), getButtonText().toUpperCase()) + 8.0f;
+}
+
+//==============================================================================
+void DiceButton::paintButton (juce::Graphics& g, bool over, bool down)
+{
+    // a die: rounded square with five pips
+    const auto& t = themeOf (*this);
+    const auto r = getLocalBounds().toFloat().reduced (1.5f);
+    const float s = r.getWidth() / 11.0f;
+    g.setColour (over || down ? t.colours.accentHi : t.colours.markDim);
+    g.drawRoundedRectangle (r, 2.4f * s, 1.1f * s);
+    for (auto p : { juce::Point<float> (3.2f, 3.2f), { 7.8f, 3.2f }, { 5.5f, 5.5f }, { 3.2f, 7.8f }, { 7.8f, 7.8f } })
+        g.fillEllipse (r.getX() + p.x * s - 0.95f * s, r.getY() + p.y * s - 0.95f * s, 1.9f * s, 1.9f * s);
 }
 
 //==============================================================================

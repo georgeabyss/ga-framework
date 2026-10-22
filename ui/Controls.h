@@ -25,6 +25,9 @@ public:
     void mouseMove (const juce::MouseEvent&) override;
     void mouseExit (const juce::MouseEvent&) override;
 
+    // where the dial's centre is, in the knob (sections line knobs up by it)
+    juce::Point<int> dialCentre() const;
+
     // mini style only: clicking the name calls onLockClick (like Valhalla's mix lock)
     void setLockable (std::function<void()> onLockClick);
     void setLocked (bool shouldBeLocked);
@@ -88,7 +91,7 @@ private:
 class LampButton : public juce::Button
 {
 public:
-    LampButton() : juce::Button ("lamp") { setClickingTogglesState (true); setMouseCursor (juce::MouseCursor::PointingHandCursor); }
+    LampButton() : juce::Button ("lamp") { setSize (16, 16); setClickingTogglesState (true); setMouseCursor (juce::MouseCursor::PointingHandCursor); }
     bool hitTest (int x, int y) override;
     void paintButton (juce::Graphics&, bool, bool) override;
 };
@@ -115,7 +118,7 @@ private:
 class SectionLed : public juce::Button
 {
 public:
-    SectionLed() : juce::Button ("led") { setClickingTogglesState (true); setMouseCursor (juce::MouseCursor::PointingHandCursor); }
+    SectionLed() : juce::Button ("led") { setSize (14, 14); setClickingTogglesState (true); setMouseCursor (juce::MouseCursor::PointingHandCursor); }
     void setLit (bool shouldBeLit) { if (shouldBeLit != lit) { lit = shouldBeLit; repaint(); } }
     void paintButton (juce::Graphics&, bool isOver, bool isDown) override;
 
@@ -139,6 +142,17 @@ public:
 private:
     float alarm = 0.0f;
 };
+
+// a dice icon: click to randomise something (a section, everything)
+class DiceButton : public juce::Button
+{
+public:
+    DiceButton() : juce::Button ("dice") { setSize (14, 14); setMouseCursor (juce::MouseCursor::PointingHandCursor); }
+    void paintButton (juce::Graphics&, bool isOver, bool isDown) override;
+};
+
+// The point a control is lined up by: a knob's dial, otherwise the middle of the control.
+juce::Point<int> anchorOf (const juce::Component&);
 
 // small drop-down box for a setting that is not a parameter (window size)
 class MenuBox : public juce::Component, public juce::SettableTooltipClient
